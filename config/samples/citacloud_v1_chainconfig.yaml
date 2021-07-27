@@ -1,0 +1,7 @@
+apiVersion: citacloud.buaa.edu.cn/v1
+kind: ChainConfig
+metadata:
+  name: chainconfig-sample
+spec:
+  # Add fields here
+  chainname: buaa-chain

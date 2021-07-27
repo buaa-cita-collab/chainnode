@@ -3,4 +3,23 @@ layout:
 - go.kubebuilder.io/v3
 projectName: chainnode
 repo: github.com/buaa-cita/chainnode
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: buaa.edu.cn
+  group: citacloud
+  kind: ChainNode
+  path: github.com/buaa-cita/chainnode/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: buaa.edu.cn
+  group: citacloud
+  kind: ChainConfig
+  path: github.com/buaa-cita/chainnode/api/v1
+  version: v1
 version: "3"

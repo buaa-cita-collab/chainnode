@@ -1,0 +1,7 @@
+apiVersion: citacloud.buaa.edu.cn/v1
+kind: ChainNode
+metadata:
+  name: chainnode-sample
+spec:
+  # Add fields here
+  foo: bar
