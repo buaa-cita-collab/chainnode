@@ -1,0 +1,6 @@
+domain: buaa.edu.cn
+layout:
+- go.kubebuilder.io/v3
+projectName: chainnode
+repo: github.com/buaa-cita/chainnode
+version: "3"
