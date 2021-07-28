@@ -36,9 +36,12 @@ spec:
           spec:
             description: ChainNodeSpec defines the desired state of ChainNode
             properties:
-              foo:
-                description: Foo is an example field of ChainNode. Edit chainnode_types.go
-                  to remove/update
+              configname:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file'
+                type: string
+              nodeid:
+                description: better to use string instead of int
                 type: string
             type: object
           status:

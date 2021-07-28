@@ -27,9 +27,9 @@ import (
 type ChainNodeSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of ChainNode. Edit chainnode_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	ConfigName string `json:"configname,omitempty"`
+	// better to use string instead of int
+	NodeID string `json:"nodeid,omitempty"`
 }
 
 // ChainNodeStatus defines the observed state of ChainNode

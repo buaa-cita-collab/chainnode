@@ -13,5 +13,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
 # Binary files
 bin/
+
+# Temperary log file
+log.txt

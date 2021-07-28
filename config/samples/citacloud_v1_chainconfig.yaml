@@ -4,4 +4,4 @@ metadata:
   name: chainconfig-sample
 spec:
   # Add fields here
-  chainname: buaa-chain-new_new
+  chainname: buaa-chain-1234

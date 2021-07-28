@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+    appv1 "k8s.io/api/apps/v1"
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,6 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	apierror "k8s.io/apimachinery/pkg/api/errors"
+
 )
 
 // ChainNodeReconciler reconciles a ChainNode object
@@ -50,22 +53,65 @@ type ChainNodeReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
+         req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	var chainNode citacloudv1.ChainNode
 	logger.Info("Reconcile called really do")
-	// your logic here
+	// fetch chainNode
 	if err := r.Get(ctx, req.NamespacedName, &chainNode); err != nil {
 		logger.Error(err, "get ChainNode failed")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	configKey := types.NamespacedName{Namespace: "default", Name: "chainconfig-sample"}
+
+	// fetch chainConfig
+	var configName string
+	if chainNode.Spec.ConfigName == "" {
+		// not configName not setted
+		configName = "chainconfig-sample"
+	} else {
+		configName = chainNode.Spec.ConfigName
+	}
+	configKey:=types.NamespacedName{
+		Namespace: req.NamespacedName.Namespace,
+		Name:configName}
 	var chainConfig citacloudv1.ChainConfig
 	if err := r.Get(ctx, configKey, &chainConfig); err != nil {
-		logger.Error(err, "get chainconfig failed")
+		if apierror.IsNotFound(err) {
+			//dont show too much info if it is a not found error
+		    logger.Info("can not find chainconfig")
+		} else {
+			logger.Error(err, "get chainconfig failed")
+		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	// test if the Deployment exists
+
+	// 
+	deploymentName := req.Name+"_deployment"
+	var deployment appv1.Deployment
+	if err:=r.Get(ctx,types.NamespacedName{
+		Namespace:req.Namespace,
+		Name:deploymentName,
+	},&deployment); err!=nil {
+		// can not find deployment 
+		if apierror.IsNotFound(err) {
+		    //build deployment
+			if errBuild:=buildNodeDeployment(chainNode,chainConfig,&deployment);
+					errBuild!=nil {
+				logger.Error(err,"Failed building node Deployment")
+				// return nil to avoid rerun reconcile
+				return ctrl.Result{},nil 
+			}
+		} else {
+			// other error
+			logger.Error(err, "can not find deployment")
+			return ctrl.Result{},client.IgnoreNotFound(err) 
+		}
+	}
+
 
 	fmt.Println("old status", "chainNode", chainNode.Status.ChainName)
 	chainNode.Status.ChainName = chainConfig.Spec.ChainName
@@ -81,6 +127,13 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	fmt.Println("new status", "chainNode", chainNode.Status.ChainName)
 
 	return ctrl.Result{}, nil
+}
+
+func buildNodeDeployment(chainNode citacloudv1.ChainNode,
+    chainConfig citacloudv1.ChainConfig,
+	deployment *appv1.Deployment) error {
+		
+	return nil
 }
 
 func mapFunc(obj client.Object) []ctrl.Request {
