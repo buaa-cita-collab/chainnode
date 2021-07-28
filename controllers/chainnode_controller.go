@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,29 +52,39 @@ type ChainNodeReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	var chainNode *citacloudv1.ChainNode
+	var chainNode citacloudv1.ChainNode
+	logger.Info("Reconcile called really do")
 	// your logic here
-	if err := r.Get(ctx, req.NamespacedName, chainNode); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, &chainNode); err != nil {
 		logger.Error(err, "get ChainNode failed")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	configKey := types.NamespacedName{Namespace: "default", Name: "chainconfig-sample"}
-	var chainConfig *citacloudv1.ChainConfig
-	if err := r.Get(ctx, configKey, chainConfig); err != nil {
+	var chainConfig citacloudv1.ChainConfig
+	if err := r.Get(ctx, configKey, &chainConfig); err != nil {
 		logger.Error(err, "get chainconfig failed")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	fmt.Println("old status", "chainNode", chainNode.Status.ChainName)
 	chainNode.Status.ChainName = chainConfig.Spec.ChainName
-	if err := r.Update(ctx, chainNode); err != nil {
+
+	// if err := r.Update(ctx, &chainNode); err != nil {
+	// 	logger.Error(err, "update chainNode failed")
+	// }
+
+	if err := r.Status().Update(ctx, &chainNode); err != nil {
 		logger.Error(err, "update chainNode failed")
 	}
+
+	fmt.Println("new status", "chainNode", chainNode.Status.ChainName)
 
 	return ctrl.Result{}, nil
 }
 
 func mapFunc(obj client.Object) []ctrl.Request {
+	fmt.Println("map func called", obj.GetNamespace(), obj.GetName())
 	return []reconcile.Request{
 		{NamespacedName: types.NamespacedName{Namespace: obj.GetNamespace(), Name: "chainnode-sample"}},
 	}
@@ -84,6 +95,26 @@ func (r *ChainNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&citacloudv1.ChainNode{}).
 		Watches(&source.Kind{Type: &citacloudv1.ChainConfig{}},
-			handler.EnqueueRequestsFromMapFunc(mapFunc)).
+			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []ctrl.Request {
+				// fmt.Println("map func called", obj.GetNamespace(), obj.GetName())
+				ctx := context.Background()
+				var nodeList citacloudv1.ChainNodeList
+				reqList := make([]reconcile.Request, 0)
+				if err := r.List(ctx, &nodeList); err != nil {
+					fmt.Println(err)
+					return reqList
+				}
+				for _, node := range nodeList.Items {
+
+					reqList = append(reqList, reconcile.Request{
+						NamespacedName: types.NamespacedName{
+							Namespace: node.GetNamespace(),
+							Name:      node.GetName(),
+						}})
+					//fmt.Println("req", node.GetName())
+				}
+				return reqList
+			})).
+		//Watches(&source.Kind{Type: &citacloudv1.ChainConfig{}}, &handler.EnqueueRequestForObject{}).
 		Complete(r)
 }

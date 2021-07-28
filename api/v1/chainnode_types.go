@@ -36,7 +36,7 @@ type ChainNodeSpec struct {
 type ChainNodeStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ChainName string `json:"foo,omitempty"`
+	ChainName string `json:"chainname,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -44,7 +44,7 @@ spec:
           status:
             description: ChainNodeStatus defines the observed state of ChainNode
             properties:
-              foo:
+              chainname:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
