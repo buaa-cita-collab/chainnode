@@ -31,7 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+    corev1 "k8s.io/api/core/v1"
 )
 
 // ChainNodeReconciler reconciles a ChainNode object
@@ -88,8 +90,6 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 	}
 
 	// test if the Deployment exists
-
-	// 
 	deploymentName := req.Name+"_deployment"
 	var deployment appv1.Deployment
 	if err:=r.Get(ctx,types.NamespacedName{
@@ -130,9 +130,279 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 }
 
 func buildNodeDeployment(chainNode citacloudv1.ChainNode,
-    chainConfig citacloudv1.ChainConfig,
-	deployment *appv1.Deployment) error {
-		
+		chainConfig citacloudv1.ChainConfig,
+		pdeployment *appv1.Deployment) error {
+
+    // init parameters 
+	chainName := chainConfig.Spec.ChainName
+    nodeID := chainNode.Spec.NodeID
+	nodeName := chainName+"_"+nodeID
+	replicas:=int32(1)
+	pTrue:=new(bool) // a pointer point to true
+	*pTrue=true
+
+	// build deployment
+    deployment := appv1.Deployment {
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Deployment",
+            APIVersion: "app/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: chainName+"_"+nodeID,
+			Namespace: "default",
+			Labels: map[string]string{
+				"node_name":nodeName,
+				"chain_name":chainName,
+			},
+		},
+		Spec: appv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string {
+					"nodes_name":nodeName,
+				},
+			},
+			Template: corev1.PodTemplateSpec {
+				ObjectMeta: metav1.ObjectMeta {
+					Labels: map[string]string{
+						"node_name":nodeName,
+						"chain_name":chainName,
+					},
+				},
+				Spec: corev1.PodSpec{
+					ShareProcessNamespace: pTrue,
+					Containers: []corev1.Container {
+						{
+							Image: "syncthing/syncthing:latest",
+							ImagePullPolicy: "Always",
+							Name: "syncthing",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:22000,
+									Protocol:"TCP",
+									Name:"sync",
+								},
+								{
+									ContainerPort:8384,
+									Protocol:"TCP",
+									Name:"gui",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/var/syncthing",
+								},
+							},
+							Env: []corev1.EnvVar {
+								{
+									Name: "PUID",
+									Value: "0",
+								},
+								{
+									Name: "PUID",
+									Value: "0",
+								},
+							},
+						},
+						{
+							Image: "citacloud/network_direct",
+							ImagePullPolicy: "Always",
+							Name: "network",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:40000,
+									Protocol:"TCP",
+									Name:"network",
+								},
+								{
+									ContainerPort:50000,
+									Protocol:"TCP",
+									Name:"grpc",
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								"network run -p 50000",
+							},
+							WorkingDir: "/data",
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/data",
+								},
+								{
+									Name: "network-key",
+									MountPath: "/network",
+									ReadOnly: true,
+								},
+							},
+						},
+						{
+							Image: "citacloud/consensus_bft",
+							ImagePullPolicy: "Always",
+							Name: "consensus",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:50001,
+									Protocol:"TCP",
+									Name:"grpc",
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								"consensus run -p 50001",
+							},
+							WorkingDir: "/data",
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/data",
+								},
+							},
+						},
+						{
+							Image: "citacloud/executor_evm",
+							ImagePullPolicy: "Always",
+							Name: "executor",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:50002,
+									Protocol:"TCP",
+									Name:"grpc",
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								"executor run -p 50002",
+							},
+							WorkingDir: "/data",
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/data",
+								},
+							},
+						},
+						{
+							Image: "citacloud/storage_rocksdb",
+							ImagePullPolicy: "Always",
+							Name: "storage",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:50003,
+									Protocol:"TCP",
+									Name:"grpc",
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								"stroage run -p 50003",
+							},
+							WorkingDir: "/data",
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/data",
+								},
+							},
+						},
+						{
+							Image: "citacloud/controller",
+							ImagePullPolicy: "Always",
+							Name: "controller",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:50004,
+									Protocol:"TCP",
+									Name:"grpc",
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								"controller run -p 50004",
+							},
+							WorkingDir: "/data",
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/data",
+								},
+							},
+						},
+						{
+							Image: "citacloud/kms_sm",
+							ImagePullPolicy: "Always",
+							Name: "kms",
+							Ports: []corev1.ContainerPort {
+								{
+									ContainerPort:50005,
+									Protocol:"TCP",
+									Name:"grpc",
+								},
+							},
+							Command: []string{
+								"sh",
+								"-c",
+								"kms run -p 50004 -k /kms/key_file",
+							},
+							WorkingDir: "/data",
+							VolumeMounts: []corev1.VolumeMount {
+								{
+									Name: "datadir",
+									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									MountPath: "/data",
+								},
+								{
+									Name: "kms-key",
+									MountPath: "/kms",
+									ReadOnly: true,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume {
+						{
+							Name: "kms-key",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource {
+									SecretName: "kms-secret-"+chainName,
+								},
+							},
+						},
+						{
+							Name: "network-key",
+							VolumeSource:corev1.VolumeSource {
+								Secret: &corev1.SecretVolumeSource {
+									SecretName: chainName+"-"+nodeID+"network-secret",
+								},
+							},
+						},
+						{
+							Name: "datadir",
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName:"local-pvc",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	deployment.DeepCopyInto(pdeployment)
 	return nil
 }
 
