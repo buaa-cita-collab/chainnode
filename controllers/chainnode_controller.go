@@ -20,8 +20,10 @@ import (
 	"context"
 	"fmt"
 
-    appv1 "k8s.io/api/apps/v1"
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
+	appv1 "k8s.io/api/apps/v1"
+	apierror "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -30,10 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	apierror "k8s.io/apimachinery/pkg/api/errors"
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-    corev1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // ChainNodeReconciler reconciles a ChainNode object
@@ -56,7 +56,7 @@ type ChainNodeReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
-         req ctrl.Request) (ctrl.Result, error) {
+	req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	var chainNode citacloudv1.ChainNode
 	logger.Info("Reconcile called really do")
@@ -66,7 +66,6 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-
 	// fetch chainConfig
 	var configName string
 	if chainNode.Spec.ConfigName == "" {
@@ -75,14 +74,14 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 	} else {
 		configName = chainNode.Spec.ConfigName
 	}
-	configKey:=types.NamespacedName{
+	configKey := types.NamespacedName{
 		Namespace: req.NamespacedName.Namespace,
-		Name:configName}
+		Name:      configName}
 	var chainConfig citacloudv1.ChainConfig
 	if err := r.Get(ctx, configKey, &chainConfig); err != nil {
 		if apierror.IsNotFound(err) {
 			//dont show too much info if it is a not found error
-		    logger.Info("can not find chainconfig")
+			logger.Info("can not find chainconfig")
 		} else {
 			logger.Error(err, "get chainconfig failed")
 		}
@@ -90,28 +89,32 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 	}
 
 	// test if the Deployment exists
-	deploymentName := req.Name+"_deployment"
+	deploymentName := req.Name + "_deployment"
 	var deployment appv1.Deployment
-	if err:=r.Get(ctx,types.NamespacedName{
-		Namespace:req.Namespace,
-		Name:deploymentName,
-	},&deployment); err!=nil {
-		// can not find deployment 
+	if err := r.Get(ctx, types.NamespacedName{
+		Namespace: req.Namespace,
+		Name:      deploymentName,
+	}, &deployment); err != nil {
+		// can not find deployment
 		if apierror.IsNotFound(err) {
-		    //build deployment
-			if errBuild:=buildNodeDeployment(chainNode,chainConfig,&deployment);
-					errBuild!=nil {
-				logger.Error(err,"Failed building node Deployment")
+			//build deployment
+			if errBuild := buildNodeDeployment(chainNode, chainConfig, &deployment); errBuild != nil {
+				logger.Error(errBuild, "Failed building node Deployment")
 				// return nil to avoid rerun reconcile
-				return ctrl.Result{},nil 
+				return ctrl.Result{}, nil
 			}
+			if errCreate := r.Create(ctx, &deployment); errCreate != nil {
+				logger.Error(err, "Failed create Deployment")
+				// return nil to avoid rerun reconcile
+				return ctrl.Result{}, nil
+			}
+
 		} else {
 			// other error
 			logger.Error(err, "can not find deployment")
-			return ctrl.Result{},client.IgnoreNotFound(err) 
+			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
 	}
-
 
 	fmt.Println("old status", "chainNode", chainNode.Status.ChainName)
 	chainNode.Status.ChainName = chainConfig.Spec.ChainName
@@ -130,96 +133,96 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 }
 
 func buildNodeDeployment(chainNode citacloudv1.ChainNode,
-		chainConfig citacloudv1.ChainConfig,
-		pdeployment *appv1.Deployment) error {
+	chainConfig citacloudv1.ChainConfig,
+	pdeployment *appv1.Deployment) error {
 
-    // init parameters 
+	// init parameters
 	chainName := chainConfig.Spec.ChainName
-    nodeID := chainNode.Spec.NodeID
-	nodeName := chainName+"_"+nodeID
-	replicas:=int32(1)
-	pTrue:=new(bool) // a pointer point to true
-	*pTrue=true
+	nodeID := chainNode.Spec.NodeID
+	nodeName := chainName + "_" + nodeID
+	replicas := int32(1)
+	pTrue := new(bool) // a pointer point to true
+	*pTrue = true
 
 	// build deployment
-    deployment := appv1.Deployment {
+	deployment := appv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "Deployment",
-            APIVersion: "app/v1",
+			Kind:       "Deployment",
+			APIVersion: "app/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: chainName+"_"+nodeID,
+			Name:      chainName + "_" + nodeID,
 			Namespace: "default",
 			Labels: map[string]string{
-				"node_name":nodeName,
-				"chain_name":chainName,
+				"node_name":  nodeName,
+				"chain_name": chainName,
 			},
 		},
 		Spec: appv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string {
-					"nodes_name":nodeName,
+				MatchLabels: map[string]string{
+					"nodes_name": nodeName,
 				},
 			},
-			Template: corev1.PodTemplateSpec {
-				ObjectMeta: metav1.ObjectMeta {
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"node_name":nodeName,
-						"chain_name":chainName,
+						"node_name":  nodeName,
+						"chain_name": chainName,
 					},
 				},
 				Spec: corev1.PodSpec{
 					ShareProcessNamespace: pTrue,
-					Containers: []corev1.Container {
+					Containers: []corev1.Container{
 						{
-							Image: "syncthing/syncthing:latest",
+							Image:           "syncthing/syncthing:latest",
 							ImagePullPolicy: "Always",
-							Name: "syncthing",
-							Ports: []corev1.ContainerPort {
+							Name:            "syncthing",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:22000,
-									Protocol:"TCP",
-									Name:"sync",
+									ContainerPort: 22000,
+									Protocol:      "TCP",
+									Name:          "sync",
 								},
 								{
-									ContainerPort:8384,
-									Protocol:"TCP",
-									Name:"gui",
+									ContainerPort: 8384,
+									Protocol:      "TCP",
+									Name:          "gui",
 								},
 							},
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/var/syncthing",
 								},
 							},
-							Env: []corev1.EnvVar {
+							Env: []corev1.EnvVar{
 								{
-									Name: "PUID",
+									Name:  "PUID",
 									Value: "0",
 								},
 								{
-									Name: "PUID",
+									Name:  "PUID",
 									Value: "0",
 								},
 							},
 						},
 						{
-							Image: "citacloud/network_direct",
+							Image:           "citacloud/network_direct",
 							ImagePullPolicy: "Always",
-							Name: "network",
-							Ports: []corev1.ContainerPort {
+							Name:            "network",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:40000,
-									Protocol:"TCP",
-									Name:"network",
+									ContainerPort: 40000,
+									Protocol:      "TCP",
+									Name:          "network",
 								},
 								{
-									ContainerPort:50000,
-									Protocol:"TCP",
-									Name:"grpc",
+									ContainerPort: 50000,
+									Protocol:      "TCP",
+									Name:          "grpc",
 								},
 							},
 							Command: []string{
@@ -228,28 +231,28 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 								"network run -p 50000",
 							},
 							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/data",
 								},
 								{
-									Name: "network-key",
+									Name:      "network-key",
 									MountPath: "/network",
-									ReadOnly: true,
+									ReadOnly:  true,
 								},
 							},
 						},
 						{
-							Image: "citacloud/consensus_bft",
+							Image:           "citacloud/consensus_bft",
 							ImagePullPolicy: "Always",
-							Name: "consensus",
-							Ports: []corev1.ContainerPort {
+							Name:            "consensus",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:50001,
-									Protocol:"TCP",
-									Name:"grpc",
+									ContainerPort: 50001,
+									Protocol:      "TCP",
+									Name:          "grpc",
 								},
 							},
 							Command: []string{
@@ -258,23 +261,23 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 								"consensus run -p 50001",
 							},
 							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/data",
 								},
 							},
 						},
 						{
-							Image: "citacloud/executor_evm",
+							Image:           "citacloud/executor_evm",
 							ImagePullPolicy: "Always",
-							Name: "executor",
-							Ports: []corev1.ContainerPort {
+							Name:            "executor",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:50002,
-									Protocol:"TCP",
-									Name:"grpc",
+									ContainerPort: 50002,
+									Protocol:      "TCP",
+									Name:          "grpc",
 								},
 							},
 							Command: []string{
@@ -283,23 +286,23 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 								"executor run -p 50002",
 							},
 							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/data",
 								},
 							},
 						},
 						{
-							Image: "citacloud/storage_rocksdb",
+							Image:           "citacloud/storage_rocksdb",
 							ImagePullPolicy: "Always",
-							Name: "storage",
-							Ports: []corev1.ContainerPort {
+							Name:            "storage",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:50003,
-									Protocol:"TCP",
-									Name:"grpc",
+									ContainerPort: 50003,
+									Protocol:      "TCP",
+									Name:          "grpc",
 								},
 							},
 							Command: []string{
@@ -308,23 +311,23 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 								"stroage run -p 50003",
 							},
 							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/data",
 								},
 							},
 						},
 						{
-							Image: "citacloud/controller",
+							Image:           "citacloud/controller",
 							ImagePullPolicy: "Always",
-							Name: "controller",
-							Ports: []corev1.ContainerPort {
+							Name:            "controller",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:50004,
-									Protocol:"TCP",
-									Name:"grpc",
+									ContainerPort: 50004,
+									Protocol:      "TCP",
+									Name:          "grpc",
 								},
 							},
 							Command: []string{
@@ -333,23 +336,23 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 								"controller run -p 50004",
 							},
 							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/data",
 								},
 							},
 						},
 						{
-							Image: "citacloud/kms_sm",
+							Image:           "citacloud/kms_sm",
 							ImagePullPolicy: "Always",
-							Name: "kms",
-							Ports: []corev1.ContainerPort {
+							Name:            "kms",
+							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort:50005,
-									Protocol:"TCP",
-									Name:"grpc",
+									ContainerPort: 50005,
+									Protocol:      "TCP",
+									Name:          "grpc",
 								},
 							},
 							Command: []string{
@@ -358,34 +361,34 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 								"kms run -p 50004 -k /kms/key_file",
 							},
 							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount {
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name: "datadir",
-									SubPath: "cita-cloud/test-chain/node"+nodeID,
+									Name:      "datadir",
+									SubPath:   "cita-cloud/test-chain/node" + nodeID,
 									MountPath: "/data",
 								},
 								{
-									Name: "kms-key",
+									Name:      "kms-key",
 									MountPath: "/kms",
-									ReadOnly: true,
+									ReadOnly:  true,
 								},
 							},
 						},
 					},
-					Volumes: []corev1.Volume {
+					Volumes: []corev1.Volume{
 						{
 							Name: "kms-key",
 							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource {
-									SecretName: "kms-secret-"+chainName,
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "kms-secret-" + chainName,
 								},
 							},
 						},
 						{
 							Name: "network-key",
-							VolumeSource:corev1.VolumeSource {
-								Secret: &corev1.SecretVolumeSource {
-									SecretName: chainName+"-"+nodeID+"network-secret",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: chainName + "-" + nodeID + "network-secret",
 								},
 							},
 						},
@@ -393,7 +396,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							Name: "datadir",
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName:"local-pvc",
+									ClaimName: "local-pvc",
 								},
 							},
 						},
