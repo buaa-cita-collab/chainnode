@@ -55,9 +55,33 @@ type ChainNodeReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
+
+// 节点级别的配置，每个节点在符合当前链的治理下，选择自己的个性化配置
+/*
+	pvcName // 此节点配置文件的路径
+	name // 节点的名字
+	chainconfig // 指定使用的链config
+	kms_password  // 节点的kms服务的密码
+	network-key // 节点的私钥
+	六个微服务的配置：包括：
+		is_std_out // 是否将日志输出到标准输出
+		log-level // 日志等级
+		以及其他可以各个节点不同的配置
+
+	service.port //服务的端口
+	service.eipName
+
+	// loadbanlancer，可以交由运维的人员来处理，
+		service.endIP //多集群
+		service.interface
+		service.startIP
+
+*/
+
 func (r *ChainNodeReconciler) Reconcile(ctx context.Context,
 	req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Info("start reconcile")
 	var chainNode citacloudv1.ChainNode
 	logger.Info("Reconcile called really do")
 	// fetch chainNode

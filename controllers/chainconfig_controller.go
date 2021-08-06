@@ -46,6 +46,27 @@ type ChainConfigReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
+
+// 这里列出链级别的配置，意味着集群当中的多个节点使用相同的配置
+
+/*
+	// 以下配置即可满足链级别的配置
+	chain_name // 链名称
+	timestamp //起链的时间戳
+	super_admin //管理员节点
+	nodes //所有节点的网络地址，起链之后会发生变化
+	authorities //所有共识节点的账户地址
+	六个微服务的 image // 用户通过选择image来定制自己的链，起链之后不会发生变化
+	block_delay_number //区块从共识完成到最终确认，延迟的区块数量，直接硬编码
+	block_interval // 硬编码 3s
+	enable_tls // 直接默认打开 tls
+*/
+
+/*
+	pvcName // 使用的 pvc 的 name
+	// 作为配置文件的目录，每个节点可以不一样
+*/
+
 func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
