@@ -164,9 +164,9 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Namespace: req.Namespace,
 		Name:      kmsSecretName,
 	}, &secret); err != nil {
-		// can not find deployment
+		// can not find Secret
 		if apierror.IsNotFound(err) {
-			//build deployment
+			//build Secret
 			if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &kmssecret); errBuild != nil {
 				logger.Error(errBuild, "Failed building node Secret")
 				// return nil to avoid rerun reconcile
@@ -208,9 +208,9 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Namespace: req.Namespace,
 		Name:      networkSecretName,
 	}, &secret); err != nil {
-		// can not find deployment
+		// can not find Secret
 		if apierror.IsNotFound(err) {
-			//build deployment
+			//build Secret
 			if errBuild := buildNodenNtworkSecret(chainNode, chainConfig, &networksecret); errBuild != nil {
 				logger.Error(errBuild, "Failed building node Secret")
 				// return nil to avoid rerun reconcile
@@ -228,10 +228,10 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	//kmsSecret存在，应该对其进行更新
+	//networkSecret存在，应该对其进行更新
 	var newNetworkSecret corev1.Secret
 	if errBuild := buildNodeNetworkSecret(chainNode, chainConfig, &newNetworkSecret); errBuild != nil {
-		logger.Error(errBuild, "Failed building node Deployment")
+		logger.Error(errBuild, "Failed building network Secret")
 		// return nil to avoid rerun reconcile
 		return ctrl.Result{}, nil
 	}
