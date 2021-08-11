@@ -36,12 +36,26 @@ spec:
           spec:
             description: ChainNodeSpec defines the desired state of ChainNode
             properties:
+              chainconfig:
+                type: string
               configname:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file'
                 type: string
+              is_std_out:
+                type: string
+              kms_password:
+                type: string
+              log_level:
+                type: string
+              network_key:
+                type: string
               nodeid:
                 description: better to use string instead of int
+                type: string
+              service_eipName:
+                type: string
+              service_port:
                 type: string
             type: object
           status:

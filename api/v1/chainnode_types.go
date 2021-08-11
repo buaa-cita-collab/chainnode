@@ -29,13 +29,13 @@ type ChainNodeSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	ConfigName string `json:"configname,omitempty"`
 	// better to use string instead of int
-	NodeID string `json:"nodeid,omitempty"`
-	ChainConfig string `json:"chainconfig,omitempty"`
-	KmsPassword string `json:"kms_password,omitempty"`
-	NetworkKey string `json:"network_key,omitempty"`
-	IsDtdOut string `json:"is_std_out,omitempty"`
-	LogLevel string `json:"log_level,omitempty"`
-	ServicePort string `json:"service_port,omitempty"`
+	NodeID         string `json:"nodeid,omitempty"`
+	ChainConfig    string `json:"chainconfig,omitempty"`
+	KmsPassword    string `json:"kms_password,omitempty"`
+	NetworkKey     string `json:"network_key,omitempty"`
+	IsDtdOut       string `json:"is_std_out,omitempty"`
+	LogLevel       string `json:"log_level,omitempty"`
+	ServicePort    string `json:"service_port,omitempty"`
 	ServiceEipName string `json:"service_eipName,omitempty"`
 }
 

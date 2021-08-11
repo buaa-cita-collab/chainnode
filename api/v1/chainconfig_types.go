@@ -28,17 +28,17 @@ type ChainConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ChainName string `json:"chain_name,omitempty"`
-	TimeStamp int `json:"timestamp,omitempty"`
-	SuperAdmin string `json:"super_admin,omitempty"`
-	Nodes []string `json:"nodes,omitempty"`
-	Authorities []string `json:"authorities,omitempty"`
-	NetworkImage string `json:"network_image"`
-	ConsensusImage string `json:"consensus_image"`
-	ExecutorImage string `json:"executor_image"`
-	StorageImage string `json:"storage_image"`
-	ControllerImage string `json:"controller_image"`
-	KmsImage string `json:"kms_image"`
+	ChainName       string   `json:"chain_name,omitempty"`
+	TimeStamp       int      `json:"timestamp,omitempty"`
+	SuperAdmin      string   `json:"super_admin,omitempty"`
+	Nodes           []string `json:"nodes,omitempty"`
+	Authorities     []string `json:"authorities,omitempty"`
+	NetworkImage    string   `json:"network_image"`
+	ConsensusImage  string   `json:"consensus_image"`
+	ExecutorImage   string   `json:"executor_image"`
+	StorageImage    string   `json:"storage_image"`
+	ControllerImage string   `json:"controller_image"`
+	KmsImage        string   `json:"kms_image"`
 }
 
 // ChainConfigStatus defines the observed state of ChainConfig

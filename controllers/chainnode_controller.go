@@ -78,6 +78,11 @@ type ChainNodeReconciler struct {
 
 */
 
+const (
+	updateNeeded="updateNeeded"
+	rebuildNeeded="rebuildNeeded"
+)
+
 func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("start reconcile")
@@ -98,7 +103,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		configName = chainNode.Spec.ConfigName
 	}
-	
+
 	configKey := types.NamespacedName{
 		Namespace: req.NamespacedName.Namespace,
 		Name:      configName}
@@ -155,7 +160,6 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-
 	// test if the kmsSecret exists
 	kmsSecretName := req.Name + "_kms_secret"
 	var kmsSecret corev1.Secret
@@ -163,16 +167,16 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      kmsSecretName,
-	}, &secret); err != nil {
+	}, &kmsSecret); err != nil {
 		// can not find Secret
 		if apierror.IsNotFound(err) {
 			//build Secret
-			if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &kmssecret); errBuild != nil {
+			if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &kmsSecret); errBuild != nil {
 				logger.Error(errBuild, "Failed building node Secret")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
 			}
-			if errCreate := r.Create(ctx, &kmssecret); errCreate != nil {
+			if errCreate := r.Create(ctx, &kmsSecret); errCreate != nil {
 				logger.Error(err, "Failed create Secret")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
@@ -192,13 +196,12 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	kmsSecret.Spec = newKmsSecret.Spec
+	kmsSecret.Data = newKmsSecret.Data
 
 	if err := r.Update(ctx, &kmsSecret); err != nil {
 		logger.Error(err, "Update ChainNode failed")
 		return ctrl.Result{}, err
 	}
-
 
 	// test if the networkSecret exists
 	networkSecretName := req.Name + "_network_secret"
@@ -207,16 +210,16 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      networkSecretName,
-	}, &secret); err != nil {
+	}, &networkSecret); err != nil {
 		// can not find Secret
 		if apierror.IsNotFound(err) {
 			//build Secret
-			if errBuild := buildNodenNtworkSecret(chainNode, chainConfig, &networksecret); errBuild != nil {
+			if errBuild := buildNodeNetworkSecret(chainNode, chainConfig, &networkSecret); errBuild != nil {
 				logger.Error(errBuild, "Failed building node Secret")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
 			}
-			if errCreate := r.Create(ctx, &networksecret); errCreate != nil {
+			if errCreate := r.Create(ctx, &networkSecret); errCreate != nil {
 				logger.Error(err, "Failed create Secret")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
@@ -236,13 +239,12 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	networkSecret.Spec = newNetworkSecret.Spec
+	networkSecret.Data = newNetworkSecret.Data
 
 	if err := r.Update(ctx, &networkSecret); err != nil {
 		logger.Error(err, "Update ChainNode failed")
 		return ctrl.Result{}, err
 	}
-
 
 	fmt.Println("old status", "chainNode", chainNode.Status.ChainName)
 	chainNode.Status.ChainName = chainConfig.Spec.ChainName
@@ -345,7 +347,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           networkImage,//"citacloud/network_direct",
+							Image:           networkImage, //"citacloud/network_direct",
 							ImagePullPolicy: "Always",
 							Name:            "network",
 							Ports: []corev1.ContainerPort{
@@ -380,7 +382,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           consensusImage,//"citacloud/consensus_bft",
+							Image:           consensusImage, //"citacloud/consensus_bft",
 							ImagePullPolicy: "Always",
 							Name:            "consensus",
 							Ports: []corev1.ContainerPort{
@@ -405,7 +407,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           executorImage,//"citacloud/executor_evm",
+							Image:           executorImage, //"citacloud/executor_evm",
 							ImagePullPolicy: "Always",
 							Name:            "executor",
 							Ports: []corev1.ContainerPort{
@@ -430,7 +432,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           storageImage,//"citacloud/storage_rocksdb",
+							Image:           storageImage, //"citacloud/storage_rocksdb",
 							ImagePullPolicy: "Always",
 							Name:            "storage",
 							Ports: []corev1.ContainerPort{
@@ -455,7 +457,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           controllerImage,//"citacloud/controller",
+							Image:           controllerImage, //"citacloud/controller",
 							ImagePullPolicy: "Always",
 							Name:            "controller",
 							Ports: []corev1.ContainerPort{
@@ -480,7 +482,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           kmsImage,//"citacloud/kms_sm",
+							Image:           kmsImage, //"citacloud/kms_sm",
 							ImagePullPolicy: "Always",
 							Name:            "kms",
 							Ports: []corev1.ContainerPort{
@@ -545,12 +547,9 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 }
 
 func buildNodeKmsSecret(chainNode citacloudv1.ChainNode, chainConfig citacloudv1.ChainConfig, psecret *corev1.Secret) error {
-	
+
 	// init parameters
 	chainName := chainConfig.Spec.ChainName
-	nodeID := chainNode.Spec.NodeID
-	nodeName := chainName + "_" + nodeID
-	replicas := int32(1)
 
 	// build secret
 	secret := corev1.Secret{
@@ -559,31 +558,28 @@ func buildNodeKmsSecret(chainNode citacloudv1.ChainNode, chainConfig citacloudv1
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kms-secret-" + chainName,
+			Name: "kms-secret-" + chainName,
 			Labels: map[string]string{
-				"chain_name":  chainName,
+				"chain_name":   chainName,
 				"secret_level": "chainconfig",
 			},
 		},
-		Type: corev1.SecretType{
-			Type: "Opaque",
+		Type: "Opaque",
+		Data: map[string][]byte{
+			"key_file": []byte("MTIzNDU2"),
 		},
-		Date: map[string]string{
-			"key_file":  "MTIzNDU2",
-		}
 	}
 	secret.DeepCopyInto(psecret)
 	return nil
 }
 
 func buildNodeNetworkSecret(chainNode citacloudv1.ChainNode, chainConfig citacloudv1.ChainConfig, psecret *corev1.Secret) error {
-	
+
 	// init parameters
 	chainName := chainConfig.Spec.ChainName
 	nodeID := chainNode.Spec.NodeID
-	nodeName := chainName + "_" + nodeID
 
-	networkKey := chainnode.Spec.NetworkKey
+	networkKey := chainNode.Spec.NetworkKey
 
 	// build secret
 	secret := corev1.Secret{
@@ -592,23 +588,19 @@ func buildNodeNetworkSecret(chainNode citacloudv1.ChainNode, chainConfig citaclo
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      chainName + "-" + nodeID + "-network-secret",
+			Name: chainName + "-" + nodeID + "-network-secret",
 			Labels: map[string]string{
-				"node_id":  nodeID,
+				"node_id": nodeID,
 			},
 		},
-		Type: corev1.SecretType{
-			Type: "Opaque",
+		Type: "Opaque",
+		Data: map[string][]byte{
+			"network-key": []byte(networkKey), //"MHg2N2ZiMDhlM2NkMThhMGQ2NDVlNGVhZmY0MTY2YmVhMTc4MzIyODJlMjNkMzQxNGJmNzUwYjhjZjQ3YjkzZDQz",
 		},
-		Date: map[string]string{
-			"network-key":  networkKey,//"MHg2N2ZiMDhlM2NkMThhMGQ2NDVlNGVhZmY0MTY2YmVhMTc4MzIyODJlMjNkMzQxNGJmNzUwYjhjZjQ3YjkzZDQz",
-		}
 	}
 	secret.DeepCopyInto(psecret)
 	return nil
 }
-
-
 
 func mapFunc(obj client.Object) []ctrl.Request {
 	fmt.Println("map func called", obj.GetNamespace(), obj.GetName())

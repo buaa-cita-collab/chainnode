@@ -36,8 +36,39 @@ spec:
           spec:
             description: ChainConfigSpec defines the desired state of ChainConfig
             properties:
-              chainname:
+              authorities:
+                items:
+                  type: string
+                type: array
+              chain_name:
                 type: string
+              consensus_image:
+                type: string
+              controller_image:
+                type: string
+              executor_image:
+                type: string
+              kms_image:
+                type: string
+              network_image:
+                type: string
+              nodes:
+                items:
+                  type: string
+                type: array
+              storage_image:
+                type: string
+              super_admin:
+                type: string
+              timestamp:
+                type: integer
+            required:
+            - consensus_image
+            - controller_image
+            - executor_image
+            - kms_image
+            - network_image
+            - storage_image
             type: object
           status:
             description: ChainConfigStatus defines the observed state of ChainConfig
