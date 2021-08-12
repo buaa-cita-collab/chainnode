@@ -4,4 +4,11 @@ metadata:
   name: chainconfig-sample
 spec:
   # Add fields here
-  chainname: buaa-chain-fuckyou
+  chain_name: buaa-chain
+  network_image: citacloud/network_direct 
+  consensus_image: citacloud/consensus_bft
+  executor_image: citacloud/executor_evm
+  storage_image: citacloud/storage_rocksdb
+  controller_image: citacloud/controller
+  kms_image: citacloud/kms_sm
+  

@@ -42,20 +42,6 @@ type ChainNodeReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/finalizers,verbs=update
-
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the ChainNode object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-
 // 节点级别的配置，每个节点在符合当前链的治理下，选择自己的个性化配置
 /*
 	pvcName // 此节点配置文件的路径
@@ -79,15 +65,30 @@ type ChainNodeReconciler struct {
 */
 
 const (
-	updateNeeded="updateNeeded"
-	rebuildNeeded="rebuildNeeded"
+	updateNeeded  = "updateNeeded"
+	rebuildNeeded = "rebuildNeeded"
 )
+
+//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/finalizers,verbs=update
+//+kubebuilder:rbac:groups=batch,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=batch,resources=deployments/status,verbs=get
+
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+// TODO(user): Modify the Reconcile function to compare the state specified by
+// the ChainNode object against the actual cluster state, and then
+// perform operations to make the cluster state reflect the state specified by
+// the user.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 
 func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("start reconcile")
 	var chainNode citacloudv1.ChainNode
-	logger.Info("Reconcile called really do")
 
 	// fetch chainNode
 	if err := r.Get(ctx, req.NamespacedName, &chainNode); err != nil {
@@ -119,7 +120,9 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// test if the Deployment exists
-	deploymentName := req.Name + "_deployment"
+	nodeName := chainConfig.Spec.ChainName + "-" + chainNode.Spec.NodeID
+	deploymentName := nodeName + "-deployment"
+
 	var deployment appv1.Deployment
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: req.Namespace,
@@ -133,10 +136,14 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
 			}
-			if errCreate := r.Create(ctx, &deployment); errCreate != nil {
-				logger.Error(err, "Failed create Deployment")
+			// fmt.Println("builded deployment", deployment)
+			errCreate := r.Create(ctx, &deployment)
+			if errCreate != nil {
+				logger.Error(errCreate, "Failed create Deployment")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
+			} else {
+				logger.Info("Create Deployment Success")
 			}
 		} else {
 			// other error
@@ -161,7 +168,8 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// test if the kmsSecret exists
-	kmsSecretName := req.Name + "_kms_secret"
+	// kmsSecretName := req.Name + "-kmssecret" //it does not match the one in the build function
+	kmsSecretName := "kms-secret-" + chainConfig.Spec.ChainName
 	var kmsSecret corev1.Secret
 
 	if err := r.Get(ctx, types.NamespacedName{
@@ -177,7 +185,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, nil
 			}
 			if errCreate := r.Create(ctx, &kmsSecret); errCreate != nil {
-				logger.Error(err, "Failed create Secret")
+				logger.Error(errCreate, "Failed create Secret")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
 			}
@@ -204,7 +212,8 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// test if the networkSecret exists
-	networkSecretName := req.Name + "_network_secret"
+	// networkSecretName := req.Name + "_network_secret" //does not match name in build function
+	networkSecretName := chainConfig.Spec.ChainName + "-" + chainNode.Spec.NodeID + "-network-secret"
 	var networkSecret corev1.Secret
 
 	if err := r.Get(ctx, types.NamespacedName{
@@ -220,7 +229,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, nil
 			}
 			if errCreate := r.Create(ctx, &networkSecret); errCreate != nil {
-				logger.Error(err, "Failed create Secret")
+				logger.Error(errCreate, "Failed create Secret")
 				// return nil to avoid rerun reconcile
 				return ctrl.Result{}, nil
 			}
@@ -269,7 +278,8 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 	// init parameters
 	chainName := chainConfig.Spec.ChainName
 	nodeID := chainNode.Spec.NodeID
-	nodeName := chainName + "_" + nodeID
+	nodeName := chainName + "-" + nodeID
+	deploymentName := nodeName + "-deployment"
 	replicas := int32(1)
 	pTrue := new(bool) // a pointer point to true
 	*pTrue = true
@@ -283,12 +293,8 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 
 	// build deployment
 	deployment := appv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "app/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      chainName + "_" + nodeID,
+			Name:      deploymentName,
 			Namespace: "default",
 			Labels: map[string]string{
 				"node_name":  nodeName,
@@ -299,7 +305,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"nodes_name": nodeName,
+					"node_name": nodeName,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
@@ -543,6 +549,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 		},
 	}
 	deployment.DeepCopyInto(pdeployment)
+	_ = deployment
 	return nil
 }
 
@@ -558,7 +565,8 @@ func buildNodeKmsSecret(chainNode citacloudv1.ChainNode, chainConfig citacloudv1
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kms-secret-" + chainName,
+			Name:      "kms-secret-" + chainName,
+			Namespace: "default",
 			Labels: map[string]string{
 				"chain_name":   chainName,
 				"secret_level": "chainconfig",
@@ -588,7 +596,8 @@ func buildNodeNetworkSecret(chainNode citacloudv1.ChainNode, chainConfig citaclo
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: chainName + "-" + nodeID + "-network-secret",
+			Name:      chainName + "-" + nodeID + "-network-secret",
+			Namespace: "default",
 			Labels: map[string]string{
 				"node_id": nodeID,
 			},
@@ -600,13 +609,6 @@ func buildNodeNetworkSecret(chainNode citacloudv1.ChainNode, chainConfig citaclo
 	}
 	secret.DeepCopyInto(psecret)
 	return nil
-}
-
-func mapFunc(obj client.Object) []ctrl.Request {
-	fmt.Println("map func called", obj.GetNamespace(), obj.GetName())
-	return []reconcile.Request{
-		{NamespacedName: types.NamespacedName{Namespace: obj.GetNamespace(), Name: "chainnode-sample"}},
-	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
