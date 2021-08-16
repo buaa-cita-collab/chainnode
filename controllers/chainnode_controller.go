@@ -163,7 +163,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	deployment.Spec = newDeploy.Spec
 
 	if err := r.Update(ctx, &deployment); err != nil {
-		logger.Error(err, "Update ChainNode failed")
+		logger.Error(err, "Update chainNode failed")
 		return ctrl.Result{}, err
 	}
 
@@ -207,7 +207,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	kmsSecret.Data = newKmsSecret.Data
 
 	if err := r.Update(ctx, &kmsSecret); err != nil {
-		logger.Error(err, "Update ChainNode failed")
+		logger.Error(err, "Update kmsSecret failed")
 		return ctrl.Result{}, err
 	}
 
@@ -251,22 +251,9 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	networkSecret.Data = newNetworkSecret.Data
 
 	if err := r.Update(ctx, &networkSecret); err != nil {
-		logger.Error(err, "Update ChainNode failed")
+		logger.Error(err, "Update networkSecret failed")
 		return ctrl.Result{}, err
 	}
-
-	fmt.Println("old status", "chainNode", chainNode.Status.ChainName)
-	chainNode.Status.ChainName = chainConfig.Spec.ChainName
-
-	// if err := r.Update(ctx, &chainNode); err != nil {
-	// 	logger.Error(err, "update chainNode failed")
-	// }
-
-	if err := r.Status().Update(ctx, &chainNode); err != nil {
-		logger.Error(err, "update chainNode failed")
-	}
-
-	fmt.Println("new status", "chainNode", chainNode.Status.ChainName)
 
 	return ctrl.Result{}, nil
 }
@@ -451,7 +438,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							Command: []string{
 								"sh",
 								"-c",
-								"stroage run -p 50003",
+								"storage run -p 50003",
 							},
 							WorkingDir: "/data",
 							VolumeMounts: []corev1.VolumeMount{
@@ -531,7 +518,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							Name: "network-key",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: chainName + "-" + nodeID + "network-secret",
+									SecretName: chainName + "-" + nodeID + "-network-secret",
 								},
 							},
 						},

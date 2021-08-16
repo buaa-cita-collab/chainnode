@@ -1,8 +1,0 @@
-apiVersion: citacloud.buaa.edu.cn/v1
-kind: ChainNode
-metadata:
-  name: chainnode-sample-3
-spec:
-  # Add fields here
-  configname: chainconfig-sample
-  nodeid: "2" 

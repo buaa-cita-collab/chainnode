@@ -33,7 +33,7 @@ type ChainNodeSpec struct {
 	ChainConfig    string `json:"chainconfig,omitempty"`
 	KmsPassword    string `json:"kms_password,omitempty"`
 	NetworkKey     string `json:"network_key,omitempty"`
-	IsDtdOut       string `json:"is_std_out,omitempty"`
+	IsStdOut       string `json:"is_std_out,omitempty"`
 	LogLevel       string `json:"log_level,omitempty"`
 	ServicePort    string `json:"service_port,omitempty"`
 	ServiceEipName string `json:"service_eipName,omitempty"`
