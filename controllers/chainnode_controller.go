@@ -488,7 +488,7 @@ func buildNodeDeployment(chainNode citacloudv1.ChainNode,
 							Command: []string{
 								"sh",
 								"-c",
-								"kms run -p 50004 -k /kms/key_file",
+								"kms run -p 50005 -k /kms/key_file",
 							},
 							WorkingDir: "/data",
 							VolumeMounts: []corev1.VolumeMount{
