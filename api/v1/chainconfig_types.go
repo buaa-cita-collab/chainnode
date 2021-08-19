@@ -28,17 +28,40 @@ type ChainConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ChainName       string   `json:"chain_name,omitempty"`
-	TimeStamp       int      `json:"timestamp,omitempty"`
-	SuperAdmin      string   `json:"super_admin,omitempty"`
-	Nodes           []string `json:"nodes,omitempty"`
-	Authorities     []string `json:"authorities,omitempty"`
-	NetworkImage    string   `json:"network_image"`
-	ConsensusImage  string   `json:"consensus_image"`
-	ExecutorImage   string   `json:"executor_image"`
-	StorageImage    string   `json:"storage_image"`
-	ControllerImage string   `json:"controller_image"`
-	KmsImage        string   `json:"kms_image"`
+	// This field is deleted, use ChainNode.ObjectMeta.Name as chainname instead
+	// ChainName       string   `json:"chain_name,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	TimeStamp int `json:"timestamp,omitempty"`
+
+	// Not working yet
+	SuperAdmin string `json:"super_admin,omitempty"`
+	// Kms password, change policy not set yet
+	KmsPassword string `json:"kms_password,omitempty"`
+
+	// Can be changed
+	Nodes []string `json:"nodes,omitempty"`
+
+	// Not working yet
+	Authorities []string `json:"authorities,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	NetworkImage string `json:"network_image,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	ConsensusImage string `json:"consensus_image,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	ExecutorImage string `json:"executor_image,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	StorageImage string `json:"storage_image,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	ControllerImage string `json:"controller_image,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	KmsImage string `json:"kms_image,omitempty"`
 }
 
 // ChainConfigStatus defines the observed state of ChainConfig

@@ -36,35 +36,32 @@ spec:
           spec:
             description: ChainNodeSpec defines the desired state of ChainNode
             properties:
-              chainconfig:
-                type: string
               configname:
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "make" to regenerate code after modifying this file'
+                description: better to use string instead of int Name of the ChainConfig
+                  used Not allowed to change, any change will ignored
                 type: string
               is_std_out:
-                type: string
-              kms_password:
+                description: Debug config in config, should be used in configmap Not
+                  working yet
                 type: string
               log_level:
                 type: string
               network_key:
-                type: string
-              nodeid:
-                description: better to use string instead of int
+                description: Network secret
                 type: string
               service_eipName:
                 type: string
               service_port:
+                description: Not working yet
                 type: string
             type: object
           status:
             description: ChainNodeStatus defines the observed state of ChainNode
             properties:
-              chainname:
+              node_count:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
+                  this file Total nodes count of a chain including itself string!!!'
                 type: string
             type: object
         type: object

@@ -27,14 +27,24 @@ import (
 type ChainNodeSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ConfigName string `json:"configname,omitempty"`
+
 	// better to use string instead of int
-	NodeID         string `json:"nodeid,omitempty"`
-	ChainConfig    string `json:"chainconfig,omitempty"`
-	KmsPassword    string `json:"kms_password,omitempty"`
-	NetworkKey     string `json:"network_key,omitempty"`
-	IsStdOut       string `json:"is_std_out,omitempty"`
-	LogLevel       string `json:"log_level,omitempty"`
+	// Name of the ChainConfig used
+	// Not allowed to change, any change will ignored
+	ConfigName string `json:"configname,omitempty"`
+
+	// I dont know what is that
+	// ChainConfig    string `json:"chainconfig,omitempty"`
+
+	// Network secret
+	NetworkKey string `json:"network_key,omitempty"`
+
+	// Debug config in config, should be used in configmap
+	// Not working yet
+	IsStdOut string `json:"is_std_out,omitempty"`
+	LogLevel string `json:"log_level,omitempty"`
+
+	// Not working yet
 	ServicePort    string `json:"service_port,omitempty"`
 	ServiceEipName string `json:"service_eipName,omitempty"`
 }
@@ -43,7 +53,9 @@ type ChainNodeSpec struct {
 type ChainNodeStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ChainName string `json:"chainname,omitempty"`
+	// Total nodes count of a chain including itself
+	// string!!!
+	NodeCount string `json:"node_count,omitempty"`
 }
 
 //+kubebuilder:object:root=true

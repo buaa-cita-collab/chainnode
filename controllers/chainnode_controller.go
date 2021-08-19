@@ -19,11 +19,10 @@ package controllers
 import (
 	"context"
 	"fmt"
-
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
-	appv1 "k8s.io/api/apps/v1"
+	// appv1 "k8s.io/api/apps/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,8 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	corev1 "k8s.io/api/core/v1"
+	// corev1 "k8s.io/api/core/v1"
 )
 
 // ChainNodeReconciler reconciles a ChainNode object
@@ -63,11 +61,6 @@ type ChainNodeReconciler struct {
 		service.startIP
 
 */
-
-const (
-	updateNeeded  = "updateNeeded"
-	rebuildNeeded = "rebuildNeeded"
-)
 
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/status,verbs=get;update;patch
@@ -119,483 +112,27 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// test if the Deployment exists
-	nodeName := chainConfig.Spec.ChainName + "-" + chainNode.Spec.NodeID
-	deploymentName := nodeName + "-deployment"
-
-	var deployment appv1.Deployment
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: req.Namespace,
-		Name:      deploymentName,
-	}, &deployment); err != nil {
-		// can not find deployment
-		if apierror.IsNotFound(err) {
-			//build deployment
-			if errBuild := buildNodeDeployment(chainNode, chainConfig, &deployment); errBuild != nil {
-				logger.Error(errBuild, "Failed building node Deployment")
-				// return nil to avoid rerun reconcile
-				return ctrl.Result{}, nil
-			}
-			// fmt.Println("builded deployment", deployment)
-			errCreate := r.Create(ctx, &deployment)
-			if errCreate != nil {
-				logger.Error(errCreate, "Failed create Deployment")
-				// return nil to avoid rerun reconcile
-				return ctrl.Result{}, nil
-			} else {
-				logger.Info("Create Deployment Success")
-			}
-		} else {
-			// other error
-			logger.Error(err, "can not find deployment")
-			return ctrl.Result{}, client.IgnoreNotFound(err)
-		}
-	}
-
-	//deployment存在，应该对其进行更新
-	var newDeploy appv1.Deployment
-	if errBuild := buildNodeDeployment(chainNode, chainConfig, &newDeploy); errBuild != nil {
-		logger.Error(errBuild, "Failed building node Deployment")
-		// return nil to avoid rerun reconcile
+	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig); err != nil {
+		logger.Error(err, "reconcile node deployment failed")
 		return ctrl.Result{}, nil
 	}
 
-	deployment.Spec = newDeploy.Spec
-
-	if err := r.Update(ctx, &deployment); err != nil {
-		logger.Error(err, "Update chainNode failed")
-		return ctrl.Result{}, err
-	}
-
-	// test if the kmsSecret exists
-	// kmsSecretName := req.Name + "-kmssecret" //it does not match the one in the build function
-	kmsSecretName := "kms-secret-" + chainConfig.Spec.ChainName
-	var kmsSecret corev1.Secret
-
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: req.Namespace,
-		Name:      kmsSecretName,
-	}, &kmsSecret); err != nil {
-		// can not find Secret
-		if apierror.IsNotFound(err) {
-			//build Secret
-			if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &kmsSecret); errBuild != nil {
-				logger.Error(errBuild, "Failed building node Secret")
-				// return nil to avoid rerun reconcile
-				return ctrl.Result{}, nil
-			}
-			if errCreate := r.Create(ctx, &kmsSecret); errCreate != nil {
-				logger.Error(errCreate, "Failed create Secret")
-				// return nil to avoid rerun reconcile
-				return ctrl.Result{}, nil
-			}
-		} else {
-			// other error
-			logger.Error(err, "can not find Secret")
-			return ctrl.Result{}, client.IgnoreNotFound(err)
-		}
-	}
-
-	//kmsSecret存在，应该对其进行更新
-	var newKmsSecret corev1.Secret
-	if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &newKmsSecret); errBuild != nil {
-		logger.Error(errBuild, "Failed building node Deployment")
-		// return nil to avoid rerun reconcile
+	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig); err != nil {
+		logger.Error(err, "reconcile node deployment failed")
 		return ctrl.Result{}, nil
 	}
 
-	kmsSecret.Data = newKmsSecret.Data
-
-	if err := r.Update(ctx, &kmsSecret); err != nil {
-		logger.Error(err, "Update kmsSecret failed")
-		return ctrl.Result{}, err
-	}
-
-	// test if the networkSecret exists
-	// networkSecretName := req.Name + "_network_secret" //does not match name in build function
-	networkSecretName := chainConfig.Spec.ChainName + "-" + chainNode.Spec.NodeID + "-network-secret"
-	var networkSecret corev1.Secret
-
-	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: req.Namespace,
-		Name:      networkSecretName,
-	}, &networkSecret); err != nil {
-		// can not find Secret
-		if apierror.IsNotFound(err) {
-			//build Secret
-			if errBuild := buildNodeNetworkSecret(chainNode, chainConfig, &networkSecret); errBuild != nil {
-				logger.Error(errBuild, "Failed building node Secret")
-				// return nil to avoid rerun reconcile
-				return ctrl.Result{}, nil
-			}
-			if errCreate := r.Create(ctx, &networkSecret); errCreate != nil {
-				logger.Error(errCreate, "Failed create Secret")
-				// return nil to avoid rerun reconcile
-				return ctrl.Result{}, nil
-			}
-		} else {
-			// other error
-			logger.Error(err, "can not find Secret")
-			return ctrl.Result{}, client.IgnoreNotFound(err)
-		}
-	}
-
-	//networkSecret存在，应该对其进行更新
-	var newNetworkSecret corev1.Secret
-	if errBuild := buildNodeNetworkSecret(chainNode, chainConfig, &newNetworkSecret); errBuild != nil {
-		logger.Error(errBuild, "Failed building network Secret")
-		// return nil to avoid rerun reconcile
+	if err := r.reconcileKmsSecret(ctx, &chainConfig); err != nil {
+		logger.Error(err, "reconcile kms Secret failed")
 		return ctrl.Result{}, nil
 	}
 
-	networkSecret.Data = newNetworkSecret.Data
-
-	if err := r.Update(ctx, &networkSecret); err != nil {
-		logger.Error(err, "Update networkSecret failed")
-		return ctrl.Result{}, err
+	if err := r.reconcileNodeNetworkSecret(ctx, &chainNode, &chainConfig); err != nil {
+		logger.Error(err, "reconcile node network secret failed")
+		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func buildNodeDeployment(chainNode citacloudv1.ChainNode,
-	chainConfig citacloudv1.ChainConfig,
-	pdeployment *appv1.Deployment) error {
-
-	// init parameters
-	chainName := chainConfig.Spec.ChainName
-	nodeID := chainNode.Spec.NodeID
-	nodeName := chainName + "-" + nodeID
-	deploymentName := nodeName + "-deployment"
-	replicas := int32(1)
-	pTrue := new(bool) // a pointer point to true
-	*pTrue = true
-
-	networkImage := chainConfig.Spec.NetworkImage
-	consensusImage := chainConfig.Spec.ConsensusImage
-	executorImage := chainConfig.Spec.ExecutorImage
-	storageImage := chainConfig.Spec.StorageImage
-	controllerImage := chainConfig.Spec.ControllerImage
-	kmsImage := chainConfig.Spec.KmsImage
-
-	// build deployment
-	deployment := appv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      deploymentName,
-			Namespace: "default",
-			Labels: map[string]string{
-				"node_name":  nodeName,
-				"chain_name": chainName,
-			},
-		},
-		Spec: appv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"node_name": nodeName,
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"node_name":  nodeName,
-						"chain_name": chainName,
-					},
-				},
-				Spec: corev1.PodSpec{
-					ShareProcessNamespace: pTrue,
-					Containers: []corev1.Container{
-						{
-							Image:           "syncthing/syncthing:latest",
-							ImagePullPolicy: "Always",
-							Name:            "syncthing",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 22000,
-									Protocol:      "TCP",
-									Name:          "sync",
-								},
-								{
-									ContainerPort: 8384,
-									Protocol:      "TCP",
-									Name:          "gui",
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/var/syncthing",
-								},
-							},
-							Env: []corev1.EnvVar{
-								{
-									Name:  "PUID",
-									Value: "0",
-								},
-								{
-									Name:  "PUID",
-									Value: "0",
-								},
-							},
-						},
-						{
-							Image:           networkImage, //"citacloud/network_direct",
-							ImagePullPolicy: "Always",
-							Name:            "network",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 40000,
-									Protocol:      "TCP",
-									Name:          "network",
-								},
-								{
-									ContainerPort: 50000,
-									Protocol:      "TCP",
-									Name:          "grpc",
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								"network run -p 50000",
-							},
-							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/data",
-								},
-								{
-									Name:      "network-key",
-									MountPath: "/network",
-									ReadOnly:  true,
-								},
-							},
-						},
-						{
-							Image:           consensusImage, //"citacloud/consensus_bft",
-							ImagePullPolicy: "Always",
-							Name:            "consensus",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50001,
-									Protocol:      "TCP",
-									Name:          "grpc",
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								"consensus run -p 50001",
-							},
-							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/data",
-								},
-							},
-						},
-						{
-							Image:           executorImage, //"citacloud/executor_evm",
-							ImagePullPolicy: "Always",
-							Name:            "executor",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50002,
-									Protocol:      "TCP",
-									Name:          "grpc",
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								"executor run -p 50002",
-							},
-							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/data",
-								},
-							},
-						},
-						{
-							Image:           storageImage, //"citacloud/storage_rocksdb",
-							ImagePullPolicy: "Always",
-							Name:            "storage",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50003,
-									Protocol:      "TCP",
-									Name:          "grpc",
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								"storage run -p 50003",
-							},
-							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/data",
-								},
-							},
-						},
-						{
-							Image:           controllerImage, //"citacloud/controller",
-							ImagePullPolicy: "Always",
-							Name:            "controller",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50004,
-									Protocol:      "TCP",
-									Name:          "grpc",
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								"controller run -p 50004",
-							},
-							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/data",
-								},
-							},
-						},
-						{
-							Image:           kmsImage, //"citacloud/kms_sm",
-							ImagePullPolicy: "Always",
-							Name:            "kms",
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: 50005,
-									Protocol:      "TCP",
-									Name:          "grpc",
-								},
-							},
-							Command: []string{
-								"sh",
-								"-c",
-								"kms run -p 50005 -k /kms/key_file",
-							},
-							WorkingDir: "/data",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "datadir",
-									SubPath:   "cita-cloud/test-chain/node" + nodeID,
-									MountPath: "/data",
-								},
-								{
-									Name:      "kms-key",
-									MountPath: "/kms",
-									ReadOnly:  true,
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "kms-key",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: "kms-secret-" + chainName,
-								},
-							},
-						},
-						{
-							Name: "network-key",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: chainName + "-" + nodeID + "-network-secret",
-								},
-							},
-						},
-						{
-							Name: "datadir",
-							VolumeSource: corev1.VolumeSource{
-								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: "local-pvc",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	deployment.DeepCopyInto(pdeployment)
-	_ = deployment
-	return nil
-}
-
-func buildNodeKmsSecret(chainNode citacloudv1.ChainNode, chainConfig citacloudv1.ChainConfig, psecret *corev1.Secret) error {
-
-	// init parameters
-	chainName := chainConfig.Spec.ChainName
-
-	// build secret
-	secret := corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kms-secret-" + chainName,
-			Namespace: "default",
-			Labels: map[string]string{
-				"chain_name":   chainName,
-				"secret_level": "chainconfig",
-			},
-		},
-		Type: "Opaque",
-		Data: map[string][]byte{
-			"key_file": []byte("MTIzNDU2"),
-		},
-	}
-	secret.DeepCopyInto(psecret)
-	return nil
-}
-
-func buildNodeNetworkSecret(chainNode citacloudv1.ChainNode, chainConfig citacloudv1.ChainConfig, psecret *corev1.Secret) error {
-
-	// init parameters
-	chainName := chainConfig.Spec.ChainName
-	nodeID := chainNode.Spec.NodeID
-
-	networkKey := chainNode.Spec.NetworkKey
-
-	// build secret
-	secret := corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      chainName + "-" + nodeID + "-network-secret",
-			Namespace: "default",
-			Labels: map[string]string{
-				"node_id": nodeID,
-			},
-		},
-		Type: "Opaque",
-		Data: map[string][]byte{
-			"network-key": []byte(networkKey), //"MHg2N2ZiMDhlM2NkMThhMGQ2NDVlNGVhZmY0MTY2YmVhMTc4MzIyODJlMjNkMzQxNGJmNzUwYjhjZjQ3YjkzZDQz",
-		},
-	}
-	secret.DeepCopyInto(psecret)
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
