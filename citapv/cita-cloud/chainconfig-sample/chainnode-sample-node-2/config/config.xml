@@ -1,0 +1,136 @@
+<configuration version="32">
+    <folder autoNormalize="true" fsWatcherDelayS="1" fsWatcherEnabled="true" id="blocks" ignorePerms="false" label="" path="/var/syncthing/blocks" rescanIntervalS="0" type="sendreceive">
+        <filesystemType>basic</filesystemType>
+        <minDiskFree unit="%">1</minDiskFree>
+        <versioning>
+            <cleanupIntervalS>0</cleanupIntervalS>
+        </versioning>
+        <copiers>0</copiers>
+        <pullerMaxPendingKiB>0</pullerMaxPendingKiB>
+        <hashers>0</hashers>
+        <order>random</order>
+        <ignoreDelete>true</ignoreDelete>
+        <scanProgressIntervalS>0</scanProgressIntervalS>
+        <pullerPauseS>0</pullerPauseS>
+        <maxConflicts>10</maxConflicts>
+        <disableSparseFiles>false</disableSparseFiles>
+        <disableTempIndexes>false</disableTempIndexes>
+        <paused>false</paused>
+        <weakHashThresholdPct>25</weakHashThresholdPct>
+        <markerName>.stfolder</markerName>
+        <copyOwnershipFromParent>false</copyOwnershipFromParent>
+        <modTimeWindowS>0</modTimeWindowS>
+        <maxConcurrentWrites>0</maxConcurrentWrites>
+        <disableFsync>false</disableFsync>
+        <blockPullOrder>standard</blockPullOrder>
+        <copyRangeMethod>standard</copyRangeMethod>
+        <caseSensitiveFS>true</caseSensitiveFS>
+        <junctionsAsDirs>false</junctionsAsDirs>
+    <device id="WRMWDV5-54L4RY7-TF2MSX2-2A5EF53-XGCHGRF-VRHQ7SU-7QYP3QV-CRBISAV" introducedBy="" /><device id="O5UXZJP-234G4EO-YBI4MWE-MLPRJPV-IJSMWPR-DRMPRCU-RSLLA4Z-6JWAGAY" introducedBy="" /><device id="O74JYR2-NTKNCPP-NFSLOEM-EYLUTMC-3YYJORU-WZRAWR6-AXHOHZR-BDGNXAW" introducedBy="" /></folder>
+    <folder autoNormalize="true" fsWatcherDelayS="1" fsWatcherEnabled="true" id="proposals" ignorePerms="false" label="" path="/var/syncthing/proposals" rescanIntervalS="0" type="sendreceive">
+        <filesystemType>basic</filesystemType>
+        <minDiskFree unit="%">1</minDiskFree>
+        <versioning>
+            <cleanupIntervalS>0</cleanupIntervalS>
+        </versioning>
+        <copiers>0</copiers>
+        <pullerMaxPendingKiB>0</pullerMaxPendingKiB>
+        <hashers>0</hashers>
+        <order>random</order>
+        <ignoreDelete>true</ignoreDelete>
+        <scanProgressIntervalS>0</scanProgressIntervalS>
+        <pullerPauseS>0</pullerPauseS>
+        <maxConflicts>10</maxConflicts>
+        <disableSparseFiles>false</disableSparseFiles>
+        <disableTempIndexes>false</disableTempIndexes>
+        <paused>false</paused>
+        <weakHashThresholdPct>25</weakHashThresholdPct>
+        <markerName>.stfolder</markerName>
+        <copyOwnershipFromParent>false</copyOwnershipFromParent>
+        <modTimeWindowS>0</modTimeWindowS>
+        <maxConcurrentWrites>0</maxConcurrentWrites>
+        <disableFsync>false</disableFsync>
+        <blockPullOrder>standard</blockPullOrder>
+        <copyRangeMethod>standard</copyRangeMethod>
+        <caseSensitiveFS>true</caseSensitiveFS>
+        <junctionsAsDirs>false</junctionsAsDirs>
+    <device id="WRMWDV5-54L4RY7-TF2MSX2-2A5EF53-XGCHGRF-VRHQ7SU-7QYP3QV-CRBISAV" introducedBy="" /><device id="O5UXZJP-234G4EO-YBI4MWE-MLPRJPV-IJSMWPR-DRMPRCU-RSLLA4Z-6JWAGAY" introducedBy="" /><device id="O74JYR2-NTKNCPP-NFSLOEM-EYLUTMC-3YYJORU-WZRAWR6-AXHOHZR-BDGNXAW" introducedBy="" /></folder>
+    <folder autoNormalize="true" fsWatcherDelayS="1" fsWatcherEnabled="true" id="txs" ignorePerms="false" label="" path="/var/syncthing/txs" rescanIntervalS="0" type="sendreceive">
+        <filesystemType>basic</filesystemType>
+        <minDiskFree unit="%">1</minDiskFree>
+        <versioning>
+            <cleanupIntervalS>0</cleanupIntervalS>
+        </versioning>
+        <copiers>0</copiers>
+        <pullerMaxPendingKiB>0</pullerMaxPendingKiB>
+        <hashers>0</hashers>
+        <order>random</order>
+        <ignoreDelete>true</ignoreDelete>
+        <scanProgressIntervalS>0</scanProgressIntervalS>
+        <pullerPauseS>0</pullerPauseS>
+        <maxConflicts>10</maxConflicts>
+        <disableSparseFiles>false</disableSparseFiles>
+        <disableTempIndexes>false</disableTempIndexes>
+        <paused>false</paused>
+        <weakHashThresholdPct>25</weakHashThresholdPct>
+        <markerName>.stfolder</markerName>
+        <copyOwnershipFromParent>false</copyOwnershipFromParent>
+        <modTimeWindowS>0</modTimeWindowS>
+        <maxConcurrentWrites>0</maxConcurrentWrites>
+        <disableFsync>false</disableFsync>
+        <blockPullOrder>standard</blockPullOrder>
+        <copyRangeMethod>standard</copyRangeMethod>
+        <caseSensitiveFS>true</caseSensitiveFS>
+        <junctionsAsDirs>false</junctionsAsDirs>
+    <device id="WRMWDV5-54L4RY7-TF2MSX2-2A5EF53-XGCHGRF-VRHQ7SU-7QYP3QV-CRBISAV" introducedBy="" /><device id="O5UXZJP-234G4EO-YBI4MWE-MLPRJPV-IJSMWPR-DRMPRCU-RSLLA4Z-6JWAGAY" introducedBy="" /><device id="O74JYR2-NTKNCPP-NFSLOEM-EYLUTMC-3YYJORU-WZRAWR6-AXHOHZR-BDGNXAW" introducedBy="" /></folder>
+    <gui debugging="false" enabled="true" tls="false">
+        <address>127.0.0.1:8384</address>
+        <theme>default</theme>
+    <apikey>test-chain</apikey></gui>
+    <ldap />
+    <options>
+        <listenAddress>tcp://0.0.0.0:22000</listenAddress>
+        <globalAnnounceServer>default</globalAnnounceServer>
+        <globalAnnounceEnabled>false</globalAnnounceEnabled>
+        <localAnnounceEnabled>false</localAnnounceEnabled>
+        <localAnnouncePort>21027</localAnnouncePort>
+        <localAnnounceMCAddr />
+        <maxSendKbps>0</maxSendKbps>
+        <maxRecvKbps>0</maxRecvKbps>
+        <reconnectionIntervalS>60</reconnectionIntervalS>
+        <relaysEnabled>false</relaysEnabled>
+        <relayReconnectIntervalM>10</relayReconnectIntervalM>
+        <startBrowser>false</startBrowser>
+        <natEnabled>false</natEnabled>
+        <natLeaseMinutes>60</natLeaseMinutes>
+        <natRenewalMinutes>30</natRenewalMinutes>
+        <natTimeoutSeconds>10</natTimeoutSeconds>
+        <urAccepted>-1</urAccepted>
+        <urSeen>3</urSeen>
+        <urUniqueID />
+        <urURL />
+        <urPostInsecurely>false</urPostInsecurely>
+        <urInitialDelayS>1800</urInitialDelayS>
+        <restartOnWakeup>false</restartOnWakeup>
+        <autoUpgradeIntervalH>0</autoUpgradeIntervalH>
+        <upgradeToPreReleases>false</upgradeToPreReleases>
+        <keepTemporariesH>24</keepTemporariesH>
+        <cacheIgnoredFiles>false</cacheIgnoredFiles>
+        <progressUpdateIntervalS>1</progressUpdateIntervalS>
+        <limitBandwidthInLan>false</limitBandwidthInLan>
+        <minHomeDiskFree unit="%">1</minHomeDiskFree>
+        <releasesURL />
+        <overwriteRemoteDeviceNamesOnConnect>false</overwriteRemoteDeviceNamesOnConnect>
+        <tempIndexMinBlocks>10</tempIndexMinBlocks>
+        <trafficClass>0</trafficClass>
+        <defaultFolderPath>~</defaultFolderPath>
+        <setLowPriority>false</setLowPriority>
+        <maxFolderConcurrency>0</maxFolderConcurrency>
+        <crashReportingURL />
+        <crashReportingEnabled>false</crashReportingEnabled>
+        <stunKeepaliveStartS>0</stunKeepaliveStartS>
+        <stunKeepaliveMinS>0</stunKeepaliveMinS>
+        <databaseTuning>auto</databaseTuning>
+        <maxConcurrentIncomingRequestKiB>0</maxConcurrentIncomingRequestKiB>
+    </options>
+<device compression="always" id="WRMWDV5-54L4RY7-TF2MSX2-2A5EF53-XGCHGRF-VRHQ7SU-7QYP3QV-CRBISAV" introducedBy="" introducer="false" name="test-chain-0" skipIntroductionRemovals="false"><address>tcp://test-chain-0:22000</address><paused>false</paused><autoAcceptFolders>false</autoAcceptFolders><maxSendKbps>0</maxSendKbps><maxRecvKbps>0</maxRecvKbps><maxRequestKiB>0</maxRequestKiB></device><device compression="always" id="O5UXZJP-234G4EO-YBI4MWE-MLPRJPV-IJSMWPR-DRMPRCU-RSLLA4Z-6JWAGAY" introducedBy="" introducer="false" name="test-chain-1" skipIntroductionRemovals="false"><address>tcp://test-chain-1:22000</address><paused>false</paused><autoAcceptFolders>false</autoAcceptFolders><maxSendKbps>0</maxSendKbps><maxRecvKbps>0</maxRecvKbps><maxRequestKiB>0</maxRequestKiB></device><device compression="always" id="O74JYR2-NTKNCPP-NFSLOEM-EYLUTMC-3YYJORU-WZRAWR6-AXHOHZR-BDGNXAW" introducedBy="" introducer="false" name="test-chain-2" skipIntroductionRemovals="false"><address>tcp://test-chain-2:22000</address><paused>false</paused><autoAcceptFolders>false</autoAcceptFolders><maxSendKbps>0</maxSendKbps><maxRecvKbps>0</maxRecvKbps><maxRequestKiB>0</maxRequestKiB></device></configuration>

@@ -1,0 +1,10 @@
+enable_tls = true
+port = 40000
+[[peers]]
+ip = "test-chain-1"
+port = 40000
+
+[[peers]]
+ip = "test-chain-2"
+port = 40000
+
