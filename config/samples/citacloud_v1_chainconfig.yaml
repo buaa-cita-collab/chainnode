@@ -11,4 +11,9 @@ spec:
   storage_image: citacloud/storage_rocksdb
   controller_image: citacloud/controller
   kms_image: citacloud/kms_sm
+  nodes:
+  - node1
+
+
+
 

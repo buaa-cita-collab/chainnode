@@ -5,10 +5,6 @@ ip = "chainnode-sample-0"
 port = 40000
 
 [[peers]]
-ip = "chainnode-sample-1"
-port = 40000
-
-[[peers]]
 ip = "chainnode-sample-2"
 port = 40000
 

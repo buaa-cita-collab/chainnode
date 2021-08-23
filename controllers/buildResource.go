@@ -53,35 +53,51 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 		}
 	}
 
+	logger.Info("operation: " + operation)
+
 	// do the operation
 	if operation == buildNeeded || operation == rebuildNeeded {
 		if operation == rebuildNeeded {
-			// delete old deployment
+			logger.Info("enter rebuild")
+			// delete old deploC:\Users\HP\AppData\Local\Temp\scp48502yment
 			if errDelete := r.Delete(ctx, &deployment); errDelete != nil {
 				logger.Error(errDelete, "delete deployment failed")
+			} else {
+				logger.Info("delete deployment succeed")
 			}
+
 		}
 		// build deployment
 		if errBuild := buildNodeDeployment(chainNode,
 			chainConfig, &deployment, deploymentName); errBuild != nil {
 			logger.Error(errBuild, "Failed building node Deployment")
 			return nil
+		} else {
+			logger.Info("build deployment succeed")
 		}
 
 		if errCreate := r.Create(ctx, &deployment); errCreate != nil {
 			logger.Error(errCreate, "Create deployment failed")
 			return nil
+		} else {
+			logger.Info("create deployment succeed")
 		}
 
 		if operation == rebuildNeeded {
 			// update node count
 			chainNode.Status.NodeCount = strconv.Itoa(len(chainConfig.Spec.Nodes))
-			r.Status().Update(ctx, chainNode)
+			if errUpdate := r.Status().Update(ctx, chainNode); errUpdate != nil {
+				logger.Error(errUpdate, "updatr status failed")
+			} else {
+				logger.Info("update status succeed")
+			}
 		}
 	} else if operation == updateNeeded {
 		if errUpdate := r.Update(ctx, &deployment); errUpdate != nil {
 			logger.Error(errUpdate, "Update deployment failed")
 			return nil
+		} else {
+			logger.Info("update deployment succeed")
 		}
 	}
 	return nil

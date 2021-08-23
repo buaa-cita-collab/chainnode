@@ -1,8 +1,5 @@
 enable_tls = true
 port = 40000
-[[peers]]
-ip = "chainnode-sample-0"
-port = 40000
 
 [[peers]]
 ip = "chainnode-sample-1"
