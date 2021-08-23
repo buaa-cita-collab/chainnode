@@ -393,7 +393,7 @@ func (r *ChainNodeReconciler) reconcileKmsSecret(
 ) error {
 	logger := log.FromContext(ctx)
 	// test if the kmsSecret exists
-	kmsSecretName := chainConfig.ObjectMeta.Name + "kms-secret"
+	kmsSecretName := "kms-secret-" + chainConfig.ObjectMeta.Name
 	var kmsSecret corev1.Secret
 	operation := nothingNeeded
 	if err := r.Get(ctx, types.NamespacedName{
