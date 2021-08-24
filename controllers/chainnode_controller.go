@@ -112,6 +112,11 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if err := r.reconcileNetworkConfig(ctx, &chainNode, &chainConfig); err != nil {
+		logger.Error(err, "reconcile config failed")
+		return ctrl.Result{}, nil
+	}
+
 	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig); err != nil {
 		logger.Error(err, "reconcile node deployment failed")
 		return ctrl.Result{}, nil

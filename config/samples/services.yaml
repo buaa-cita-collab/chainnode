@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: chainnode-sample-0 #与network-config.toml对应
+  name: chainnode-sample-node-0 #与network-config.toml对应
 spec:
   ports:
   - port: 40000
@@ -33,7 +33,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: chainnode-sample-1
+  name: chainnode-sample-node-1
 spec:
   ports:
   - port: 40000
@@ -65,7 +65,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: chainnode-sample-2
+  name: chainnode-sample-node-2
 spec:
   ports:
   - port: 40000

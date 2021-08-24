@@ -17,7 +17,8 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /root/cita-cloud-datadir
+    # path: /root/cita-cloud-datadir
+    path: /home/ffff/cita-cloud-datadir
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -25,7 +26,8 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - cita-cloud-k8s
+            #- cita-cloud-k8s
+          - fffflu2004
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

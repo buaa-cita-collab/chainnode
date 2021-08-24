@@ -83,7 +83,7 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 			logger.Info("create deployment succeed")
 		}
 
-		if operation == rebuildNeeded {
+		if operation == rebuildNeeded || operation==buildNeeded {
 			// update node count
 			chainNode.Status.NodeCount = strconv.Itoa(len(chainConfig.Spec.Nodes))
 			if errUpdate := r.Status().Update(ctx, chainNode); errUpdate != nil {
@@ -236,6 +236,16 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									MountPath: "/network",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "network-config",
+									SubPath:   "network-config",
+									MountPath: "/data/network-config.toml",
+								},
+								{
+									Name:      "network-config",
+									SubPath:   "network-log",
+									MountPath: "/data/network-log4rs.yaml",
+								},
 							},
 						},
 						{
@@ -374,7 +384,7 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							Name: "kms-key",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: "kms-secret-" + chainName,
+									SecretName: chainName + "-kms-secret",
 								},
 							},
 						},
@@ -394,6 +404,16 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 								},
 							},
 						},
+						{
+							Name: "network-config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: nodeName + "-network-config",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -409,7 +429,7 @@ func (r *ChainNodeReconciler) reconcileKmsSecret(
 ) error {
 	logger := log.FromContext(ctx)
 	// test if the kmsSecret exists
-	kmsSecretName := "kms-secret-" + chainConfig.ObjectMeta.Name
+	kmsSecretName := chainConfig.ObjectMeta.Name + "-kms-secret"
 	var kmsSecret corev1.Secret
 	operation := nothingNeeded
 	if err := r.Get(ctx, types.NamespacedName{
