@@ -16,6 +16,10 @@
 
 # Binary files
 bin/
+testbin/
 
 # Temperary log file
 log.txt
+
+# Test Output
+cover.out

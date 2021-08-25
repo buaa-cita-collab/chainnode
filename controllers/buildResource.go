@@ -83,7 +83,7 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 			logger.Info("create deployment succeed")
 		}
 
-		if operation == rebuildNeeded || operation==buildNeeded {
+		if operation == rebuildNeeded || operation == buildNeeded {
 			// update node count
 			chainNode.Status.NodeCount = strconv.Itoa(len(chainConfig.Spec.Nodes))
 			if errUpdate := r.Status().Update(ctx, chainNode); errUpdate != nil {

@@ -65,8 +65,12 @@ type ChainNodeReconciler struct {
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/finalizers,verbs=update
-//+kubebuilder:rbac:groups=batch,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=batch,resources=deployments/status,verbs=get
+//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainconfigs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
