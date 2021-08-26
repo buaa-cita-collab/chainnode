@@ -9,6 +9,7 @@ import (
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strconv"
 )
@@ -67,6 +68,11 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 			return nil
 		} else {
 			logger.Info("build deployment succeed")
+		}
+
+		if errSet := ctrl.SetControllerReference(chainNode, &deployment, r.Scheme); errSet != nil {
+			logger.Error(errSet, "set controller reference failed")
+			return nil
 		}
 
 		if errCreate := r.Create(ctx, &deployment); errCreate != nil {
@@ -493,10 +499,18 @@ func (r *ChainNodeReconciler) reconcileKmsSecret(
 			logger.Error(errBuild, "Failed building kms Secret")
 			return nil
 		}
+
+		// The controller of kmsSecret is set to chainConfig since it is a config of the chain instead of a node.
+		if errSet := ctrl.SetControllerReference(chainConfig, &kmsSecret, r.Scheme); errSet != nil {
+			logger.Error(errSet, "set controller reference failed")
+			return nil
+		}
+
 		if errCreate := r.Create(ctx, &kmsSecret); errCreate != nil {
 			logger.Error(errCreate, "Failed create kms Secret")
 			return nil
 		}
+
 	} else if operation == updateNeeded {
 		if errUpdate := r.Update(ctx, &kmsSecret); errUpdate != nil {
 			logger.Error(errUpdate, "Update kms Secret failed")
@@ -589,10 +603,17 @@ func (r *ChainNodeReconciler) reconcileNodeNetworkSecret(
 			logger.Error(errBuild, "Failed building network Secret")
 			return nil
 		}
+
+		if errSet := ctrl.SetControllerReference(chainNode, &networkSecret, r.Scheme); errSet != nil {
+			logger.Error(errSet, "set controller reference failed")
+			return nil
+		}
+
 		if errCreate := r.Create(ctx, &networkSecret); errCreate != nil {
 			logger.Error(errCreate, "Failed create network Secret")
 			return nil
 		}
+
 	} else if operation == updateNeeded {
 		if errUpdate := r.Update(ctx, &networkSecret); errUpdate != nil {
 			logger.Error(errUpdate, "Update network Secret failed")
