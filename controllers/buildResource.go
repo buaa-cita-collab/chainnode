@@ -13,13 +13,6 @@ import (
 	"strconv"
 )
 
-const (
-	nothingNeeded = "nothingNeeded"
-	buildNeeded   = "buildNeeded"
-	updateNeeded  = "updateNeeded"
-	rebuildNeeded = "rebuildNeeded"
-)
-
 func (r *ChainNodeReconciler) reconcileNodeDeployment(
 	ctx context.Context,
 	chainNode *citacloudv1.ChainNode,
@@ -237,12 +230,12 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									ReadOnly:  true,
 								},
 								{
-									Name:      "network-config",
+									Name:      "config",
 									SubPath:   "network-config",
 									MountPath: "/data/network-config.toml",
 								},
 								{
-									Name:      "network-config",
+									Name:      "config",
 									SubPath:   "network-log",
 									MountPath: "/data/network-log4rs.yaml",
 								},
@@ -271,6 +264,16 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									SubPath:   "cita-cloud/" + chainName + "/" + nodeName,
 									MountPath: "/data",
 								},
+								{
+									Name:      "config",
+									SubPath:   "consensus-config",
+									MountPath: "/data/consensus-config.toml",
+								},
+								{
+									Name:      "config",
+									SubPath:   "consensus-log",
+									MountPath: "/data/consensus-log4rs.yaml",
+								},
 							},
 						},
 						{
@@ -295,6 +298,11 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									Name:      "datadir",
 									SubPath:   "cita-cloud/" + chainName + "/" + nodeName,
 									MountPath: "/data",
+								},
+								{
+									Name:      "config",
+									SubPath:   "executor-log",
+									MountPath: "/data/executor-log4rs.yaml",
 								},
 							},
 						},
@@ -321,6 +329,11 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									SubPath:   "cita-cloud/" + chainName + "/" + nodeName,
 									MountPath: "/data",
 								},
+								{
+									Name:      "config",
+									SubPath:   "storage-log",
+									MountPath: "/data/storage-log4rs.yaml",
+								},
 							},
 						},
 						{
@@ -345,6 +358,16 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									Name:      "datadir",
 									SubPath:   "cita-cloud/" + chainName + "/" + nodeName,
 									MountPath: "/data",
+								},
+								{
+									Name:      "config",
+									SubPath:   "controller-log",
+									MountPath: "/data/controller-log4rs.yaml",
+								},
+								{
+									Name:      "config",
+									SubPath:   "controller-config",
+									MountPath: "/data/controller-config.toml",
 								},
 							},
 						},
@@ -376,6 +399,11 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									MountPath: "/kms",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "config",
+									SubPath:   "kms-log",
+									MountPath: "/data/kms-log4rs.yaml",
+								},
 							},
 						},
 					},
@@ -405,11 +433,11 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Name: "network-config",
+							Name: "config",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: nodeName + "-network-config",
+										Name: nodeName + "-config",
 									},
 								},
 							},

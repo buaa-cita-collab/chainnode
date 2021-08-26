@@ -1,24 +1,23 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strconv"
-	"text/template"
 )
 
-func (r *ChainNodeReconciler) reconcileNetworkConfig(
+func (r *ChainNodeReconciler) reconcileConfig(
 	ctx context.Context,
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
 ) error {
-	// network config is mapped into the following files
+	// config is mapped into the following files
 	// network-config.toml
 	// network-log4rs.toml
 
@@ -26,23 +25,21 @@ func (r *ChainNodeReconciler) reconcileNetworkConfig(
 	nodeName := chainNode.ObjectMeta.Name
 	operation := nothingNeeded
 
-	var networkConfig corev1.ConfigMap
-	networkConfigName := nodeName + "-network-config"
+	var config corev1.ConfigMap
+	configName := nodeName + "-config"
 
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: "default",
-		Name:      networkConfigName,
-	}, &networkConfig); err != nil {
-		// can not find deployment
+		Name:      configName,
+	}, &config); err != nil {
+		// can not find configmap
 		if apierror.IsNotFound(err) {
-			//build deployment
 			operation = buildNeeded
 		} else {
-			logger.Info("error fetch deployment")
+			logger.Info("Error fetch configmap")
 			return err
 		}
 	} else {
-
 		if chainNode.Status.NodeCount != strconv.Itoa(len(chainConfig.Spec.Nodes)) {
 			operation = updateNeeded
 		}
@@ -53,38 +50,141 @@ func (r *ChainNodeReconciler) reconcileNetworkConfig(
 		return nil
 	}
 
-	if err := buildNetworkConfig(chainNode, chainConfig,
-		&networkConfig, networkConfigName); err != nil {
-		logger.Error(err, "build network config failed")
+	if err := buildConfig(chainNode, chainConfig,
+		&config, configName, logger); err != nil {
+		logger.Error(err, "Build configmap failed")
 		return nil
 	}
 
 	if operation == buildNeeded {
-		if errCreate := r.Create(ctx, &networkConfig); errCreate != nil {
+		if errCreate := r.Create(ctx, &config); errCreate != nil {
 			logger.Error(errCreate, "Create network config failed")
 			return nil
 		} else {
-			logger.Info("Create network config succeed")
+			logger.Info("Create configmap succeed")
 		}
 	} else if operation == updateNeeded {
-		if errUpdate := r.Update(ctx, &networkConfig); errUpdate != nil {
-			logger.Error(errUpdate, "Update network config failed")
+		if errUpdate := r.Update(ctx, &config); errUpdate != nil {
+			logger.Error(errUpdate, "Update configmap failed")
 			return nil
 		} else {
-			logger.Info("Update network config succeed")
+			logger.Info("Update configmap succeed")
 		}
 	}
 	return nil
 }
 
-func buildNetworkConfig(
+func buildConfig(
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
-	pnetworkConfig *corev1.ConfigMap,
-	networkConfigName string,
+	pconfig *corev1.ConfigMap,
+	configName string,
+	logger logr.Logger,
 ) error {
-	// build network config
-	networkConfigTemplateString := `enable_tls = true
+	// build the configmap and copy into pconfig
+
+	// No config is related to consensus-config.toml
+	consensusConfig := `network_port = 50000
+controller_port = 50004
+node_id = 0`
+
+	consensusLog, err := genLogConfig(chainNode, chainConfig, "consensus")
+	if err != nil {
+		logger.Error(err, "Building consensus log config failed")
+		return nil
+	}
+
+	// No config is related to consensus-config.toml
+	controllerConfig := `network_port = 50000
+consensus_port = 50001
+storage_port = 50003
+kms_port = 50005
+executor_port = 50002
+block_delay_number = 0`
+
+	controllerLog, err := genLogConfig(chainNode, chainConfig, "controller")
+	if err != nil {
+		logger.Error(err, "Building controller log config failed")
+		return nil
+	}
+
+	executorLog, err := genLogConfig(chainNode, chainConfig, "executor")
+	if err != nil {
+		logger.Error(err, "Building executor log config failed")
+		return nil
+	}
+
+	genesisConfig, err := genGenesisConfig(chainNode, chainConfig)
+	if err != nil {
+		logger.Error(err, "Building genesis config failed")
+		return nil
+	}
+
+	kmsLog, err := genLogConfig(chainNode, chainConfig, "kms")
+	if err != nil {
+		logger.Error(err, "Building kms log config failed")
+		return nil
+	}
+
+	networkConfig, err := genNetworkConfig(chainNode, chainConfig)
+	if err != nil {
+		logger.Error(err, "Building network config failed")
+		return nil
+	}
+
+	networkLog, err := genLogConfig(chainNode, chainConfig, "network")
+	if err != nil {
+		logger.Error(err, "Building network log config failed")
+		return nil
+	}
+
+	storageLog, err := genLogConfig(chainNode, chainConfig, "storage")
+	if err != nil {
+		logger.Error(err, "Building storage log config failed")
+		return nil
+	}
+
+	config := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configName,
+			Namespace: "default",
+		},
+		Data: map[string]string{
+			"consensus-config":  consensusConfig,
+			"consensus-log":     consensusLog,
+			"controller-config": controllerConfig,
+			"controller-log":    controllerLog,
+			"executor-log":      executorLog,
+			"kms-log":           kmsLog,
+			"network-config":    networkConfig,
+			"network-log":       networkLog,
+			"storage-log":       storageLog,
+			"genesis":           genesisConfig,
+		},
+	}
+	config.DeepCopyInto(pconfig)
+	return nil
+}
+
+// generate gensis.toml
+func genGenesisConfig(
+	chainNode *citacloudv1.ChainNode,
+	chainConfig *citacloudv1.ChainConfig,
+) (string, error) {
+
+	templateString := `
+timestamp = 1626417162942
+prevhash = "0x0000000000000000000000000000000000000000000000000000000000000000`
+
+	return templateBuilder(templateString, nil)
+}
+
+// generate network-config.toml
+func genNetworkConfig(
+	chainNode *citacloudv1.ChainNode,
+	chainConfig *citacloudv1.ChainConfig,
+) (string, error) {
+	templateString := `enable_tls = true
 port = 40000
 {{ range $_, $node := .}}
 [[peers]]
@@ -92,7 +192,34 @@ ip = "{{ $node }}"
 port = 40000
 {{ end }}`
 
-	networkLogTemplateString := `# Scan this file for changes every 30 seconds
+	nodesIgnoreSelf := make([]string, 0, len(chainConfig.Spec.Nodes))
+	for _, node := range chainConfig.Spec.Nodes {
+		if node == chainNode.ObjectMeta.Name { // is current node
+			continue
+		}
+		nodesIgnoreSelf = append(nodesIgnoreSelf, node)
+	}
+
+	return templateBuilder(templateString, nodesIgnoreSelf)
+}
+
+// consensus-log4rs.yaml
+// controller-log4rs.yaml
+// executor-log4rs.yaml
+// kms-log4rs.yaml
+// network-log4rs.yaml
+// storage-log4rs.yaml
+func genLogConfig(
+	chainNode *citacloudv1.ChainNode,
+	chainConfig *citacloudv1.ChainConfig,
+	serviceName string,
+) (string, error) {
+
+	configs := map[string]string{
+		"serviceName": serviceName,
+	}
+
+	templateString := `# Scan this file for changes every 30 seconds
 refresh_rate: 30 seconds
 
 appenders:
@@ -102,7 +229,7 @@ appenders:
 
   journey-service:
     kind: rolling_file
-    path: "logs/network-service.log"
+    path: "logs/{{.serviceName}}-service.log"
     policy:
       # Identifies which policy is to be used. If no kind is specified, it will
       # default to "compound".
@@ -116,59 +243,13 @@ appenders:
         kind: fixed_window
         base: 1
         count: 5
-        pattern: "logs/network-service.{}.gz"
+        pattern: "logs/{{.serviceName}}-service.{}.gz"
 
 # Set the default logging level and attach the default appender to the root
 root:
   level: info
   appenders:
     - journey-service`
-	networkConfigTemplate, err := template.New("networkConfig").Parse(networkConfigTemplateString)
-	if err != nil {
-		//logger.Error(err,"network config template parse failed")
-		// return nil
-		return err
-	}
-	networkLogTemplate, err := template.New("networkLog").Parse(networkLogTemplateString)
-	if err != nil {
-		// logger.Error(err,"network log template parse failed")
-		// return nil
-		return err
-	}
-	networkConfigBuffer := new(bytes.Buffer)
-	networkLogBuffer := new(bytes.Buffer)
-	nodesIgnoreSelf := make([]string, 0, len(chainConfig.Spec.Nodes))
-	for _, node := range chainConfig.Spec.Nodes {
-		if node == chainNode.ObjectMeta.Name { // is current node
-			continue
-		}
-		nodesIgnoreSelf = append(nodesIgnoreSelf, node)
-	}
 
-	err = networkConfigTemplate.Execute(networkConfigBuffer, nodesIgnoreSelf)
-	if err != nil {
-		// logger.Error(err,"network config template execute failed")
-		// return nil
-		return err
-	}
-	err = networkLogTemplate.Execute(networkLogBuffer, nil)
-	if err != nil {
-		// logger.Error(err,"network log template execute failed")
-		// return nil
-		return err
-	}
-
-	networkConfig := corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      networkConfigName,
-			Namespace: "default",
-		},
-		Data: map[string]string{
-			"network-config": networkConfigBuffer.String(),
-			"network-log":    networkLogBuffer.String(),
-		},
-	}
-
-	networkConfig.DeepCopyInto(pnetworkConfig)
-	return nil
+	return templateBuilder(templateString, configs)
 }

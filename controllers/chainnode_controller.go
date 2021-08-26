@@ -23,6 +23,7 @@ import (
 	// appv1 "k8s.io/api/apps/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -116,7 +117,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if err := r.reconcileNetworkConfig(ctx, &chainNode, &chainConfig); err != nil {
+	if err := r.reconcileConfig(ctx, &chainNode, &chainConfig); err != nil {
 		logger.Error(err, "reconcile config failed")
 		return ctrl.Result{}, nil
 	}
@@ -143,6 +144,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *ChainNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&citacloudv1.ChainNode{}).
+		Owns(&appv1.Deployment{}).
 		Watches(&source.Kind{Type: &citacloudv1.ChainConfig{}},
 			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []ctrl.Request {
 				// fmt.Println("map func called", obj.GetNamespace(), obj.GetName())
@@ -153,7 +155,14 @@ func (r *ChainNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					fmt.Println(err)
 					return reqList
 				}
+				chainConfig := obj.(*citacloudv1.ChainConfig)
+				chainName := chainConfig.ObjectMeta.Name
 				for _, node := range nodeList.Items {
+
+					// Only append nodes belong to this chain
+					if chainName != node.Spec.ConfigName {
+						continue
+					}
 
 					reqList = append(reqList, reconcile.Request{
 						NamespacedName: types.NamespacedName{
