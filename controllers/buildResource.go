@@ -163,9 +163,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 					Containers: []corev1.Container{
 						{
 							// TODO update to image in config
-							Image:           "syncthing/syncthing:latest",
-							ImagePullPolicy: "Always",
-							Name:            "syncthing",
+							Image: "syncthing/syncthing:1.18",
+							// ImagePullPolicy: "Always",
+							Name: "syncthing",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 22000,
@@ -197,9 +197,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           networkImage, //"citacloud/network_direct",
-							ImagePullPolicy: "Always",
-							Name:            "network",
+							Image: networkImage, //"citacloud/network_direct",
+							// ImagePullPolicy: "Always",
+							Name: "network",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 40000,
@@ -242,9 +242,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           consensusImage, //"citacloud/consensus_bft",
-							ImagePullPolicy: "Always",
-							Name:            "consensus",
+							Image: consensusImage, //"citacloud/consensus_bft",
+							// ImagePullPolicy: "Always",
+							Name: "consensus",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 50001,
@@ -277,9 +277,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           executorImage, //"citacloud/executor_evm",
-							ImagePullPolicy: "Always",
-							Name:            "executor",
+							Image: executorImage, //"citacloud/executor_evm",
+							// ImagePullPolicy: "Always",
+							Name: "executor",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 50002,
@@ -307,9 +307,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           storageImage, //"citacloud/storage_rocksdb",
-							ImagePullPolicy: "Always",
-							Name:            "storage",
+							Image: storageImage, //"citacloud/storage_rocksdb",
+							// ImagePullPolicy: "Always",
+							Name: "storage",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 50003,
@@ -337,9 +337,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           controllerImage, //"citacloud/controller",
-							ImagePullPolicy: "Always",
-							Name:            "controller",
+							Image: controllerImage, //"citacloud/controller",
+							// ImagePullPolicy: "Always",
+							Name: "controller",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 50004,
@@ -372,9 +372,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 							},
 						},
 						{
-							Image:           kmsImage, //"citacloud/kms_sm",
-							ImagePullPolicy: "Always",
-							Name:            "kms",
+							Image: kmsImage, //"citacloud/kms_sm",
+							// ImagePullPolicy: "Always",
+							Name: "kms",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 50005,

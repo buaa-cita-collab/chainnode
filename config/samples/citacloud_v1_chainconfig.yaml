@@ -5,16 +5,14 @@ metadata:
 spec:
   # Add fields here
   kms_password: "123456"
-  network_image: citacloud/network_direct 
-  consensus_image: citacloud/consensus_bft
-  executor_image: citacloud/executor_evm
-  storage_image: citacloud/storage_rocksdb
-  controller_image: citacloud/controller
-  kms_image: citacloud/kms_sm
+  network_image: citacloud/network_direct:v6.0.0
+  consensus_image: citacloud/consensus_bft:v6.0.0
+  executor_image: citacloud/executor_evm:v6.1.0
+  storage_image: citacloud/storage_rocksdb:v6.1.0
+  controller_image: citacloud/controller:v6.2.0
+  kms_image: citacloud/kms_sm:v6.0.0
   nodes:
   - chainnode-sample-node-0
   - chainnode-sample-node-1
   - chainnode-sample-node-2
-
-
 
