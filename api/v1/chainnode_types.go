@@ -27,26 +27,34 @@ import (
 type ChainNodeSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// Better to use string instead of int
 
-	// better to use string instead of int
 	// Name of the ChainConfig used
 	// Not allowed to change, any change will ignored
 	ConfigName string `json:"configname,omitempty"`
 
-	// I dont know what is that
-	// ChainConfig    string `json:"chainconfig,omitempty"`
+	// Can be changed
+	LogLevel string `json:"log_level,omitempty"`
 
 	// Network secret
 	NetworkKey string `json:"network_key,omitempty"`
 
-	// Debug config in config, should be used in configmap
-	// Not working yet
-	IsStdOut string `json:"is_std_out,omitempty"`
-	LogLevel string `json:"log_level,omitempty"`
+	// Node Address
+	// Not allowed to change, any change will ignored
+	NodeAddress string `json:"node_address,omitempty"`
 
-	// Not working yet
-	ServicePort    string `json:"service_port,omitempty"`
-	ServiceEipName string `json:"service_eipName,omitempty"`
+	// Node Key
+	// Not allowed to change, any change will ignored
+	NodeKey string `json:"node_key,omitempty"`
+
+	// Kms password, change policy not set yet
+	KmsPassword string `json:"kms_pwd,omitempty"`
+
+	// Weither or not follow when chainConfig has updated
+	// Can be updated
+	// Choose from AutoUpdate, NoUpdate
+	// Default to AutoUpdate
+    UpdatePoilcy string `json:"update_policy,omitempty"`
 }
 
 // ChainNodeStatus defines the observed state of ChainNode

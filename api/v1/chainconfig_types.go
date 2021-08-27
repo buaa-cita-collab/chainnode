@@ -31,19 +31,26 @@ type ChainConfigSpec struct {
 	// This field is deleted, use ChainNode.ObjectMeta.Name as chainname instead
 	// ChainName       string   `json:"chain_name,omitempty"`
 
+	// Not working yet
+	Authorities []string `json:"authorities,omitempty"`
+
+	// // Not working yet
+	SuperAdmin string `json:"super_admin,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	BlockInterval []string `json:"block_interval,omitempty"`
+
 	// Not allowed to change, any change will ignored
 	TimeStamp int `json:"timestamp,omitempty"`
 
-	// Not working yet
-	SuperAdmin string `json:"super_admin,omitempty"`
-	// Kms password, change policy not set yet
-	KmsPassword string `json:"kms_password,omitempty"`
+	// Not allowed to change, any change will ignored
+	PrevHash string `json:"prevhash,omitempty"`
+
+	// Not allowed to change, any change will ignored
+	EnableTLS bool `json:"enable_tls,omitempty"`
 
 	// Can be changed
 	Nodes []string `json:"nodes,omitempty"`
-
-	// Not working yet
-	Authorities []string `json:"authorities,omitempty"`
 
 	// Not allowed to change, any change will ignored
 	NetworkImage string `json:"network_image,omitempty"`

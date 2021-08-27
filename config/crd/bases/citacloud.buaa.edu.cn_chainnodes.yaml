@@ -37,22 +37,27 @@ spec:
             description: ChainNodeSpec defines the desired state of ChainNode
             properties:
               configname:
-                description: better to use string instead of int Name of the ChainConfig
-                  used Not allowed to change, any change will ignored
+                description: Name of the ChainConfig used Not allowed to change, any
+                  change will ignored
                 type: string
-              is_std_out:
-                description: Debug config in config, should be used in configmap Not
-                  working yet
+              kms_pwd:
+                description: Kms password, change policy not set yet
                 type: string
               log_level:
+                description: Can be changed
                 type: string
               network_key:
                 description: Network secret
                 type: string
-              service_eipName:
+              node_address:
+                description: Node Address Not allowed to change, any change will ignored
                 type: string
-              service_port:
-                description: Not working yet
+              node_key:
+                description: Node Key Not allowed to change, any change will ignored
+                type: string
+              update_policy:
+                description: Weither or not follow when chainConfig has updated Can
+                  be updated Choose from AutoUpdate, NoUpdate Default to AutoUpdate
                 type: string
             type: object
           status:

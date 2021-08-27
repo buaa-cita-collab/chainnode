@@ -41,20 +41,25 @@ spec:
                 items:
                   type: string
                 type: array
+              block_interval:
+                description: Not allowed to change, any change will ignored
+                items:
+                  type: string
+                type: array
               consensus_image:
                 description: Not allowed to change, any change will ignored
                 type: string
               controller_image:
                 description: Not allowed to change, any change will ignored
                 type: string
+              enable_tls:
+                description: Not allowed to change, any change will ignored
+                type: boolean
               executor_image:
                 description: Not allowed to change, any change will ignored
                 type: string
               kms_image:
                 description: Not allowed to change, any change will ignored
-                type: string
-              kms_password:
-                description: Kms password, change policy not set yet
                 type: string
               network_image:
                 description: Not allowed to change, any change will ignored
@@ -64,11 +69,14 @@ spec:
                 items:
                   type: string
                 type: array
+              prevhash:
+                description: Not allowed to change, any change will ignored
+                type: string
               storage_image:
                 description: Not allowed to change, any change will ignored
                 type: string
               super_admin:
-                description: Not working yet
+                description: // Not working yet
                 type: string
               timestamp:
                 description: Not allowed to change, any change will ignored
