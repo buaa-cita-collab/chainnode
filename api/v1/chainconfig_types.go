@@ -69,9 +69,6 @@ type ChainConfigSpec struct {
 
 	// Not allowed to change, any change will ignored
 	KmsImage string `json:"kms_image,omitempty"`
-
-	// Kms password, change policy not set yet
-	KmsPassword string `json:"kms_pwd,omitempty"`
 }
 
 // ChainConfigStatus defines the observed state of ChainConfig

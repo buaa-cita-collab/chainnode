@@ -482,8 +482,9 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 	return nil
 }
 
-func (r *ChainNodeReconciler) reconcileKmsSecret(
+func (r *ChainNodeReconciler) reconcileNodeKmsSecret(
 	ctx context.Context,
+	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
 ) error {
 	logger := log.FromContext(ctx)
@@ -512,21 +513,21 @@ func (r *ChainNodeReconciler) reconcileKmsSecret(
 		// ChainConfig.Spec.KmsPassword | update
 
 		// If the operation is updateNeeded, do updates here
-		if string(kmsSecret.Data["key_file"]) != chainConfig.Spec.KmsPassword {
+		if string(kmsSecret.Data["key_file"]) != chainNode.Spec.KmsPassword {
 			operation = updateNeeded
-			kmsSecret.Data["key_file"] = []byte(chainConfig.Spec.KmsPassword)
+			kmsSecret.Data["key_file"] = []byte(chainNode.Spec.KmsPassword)
 		}
 	}
 
 	// Do operation
 	if operation == buildNeeded {
-		if errBuild := buildKmsSecret(chainConfig, &kmsSecret, kmsSecretName); errBuild != nil {
+		if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &kmsSecret, kmsSecretName); errBuild != nil {
 			logger.Error(errBuild, "Failed building kms Secret")
 			return nil
 		}
 
 		// The controller of kmsSecret is set to chainConfig since it is a config of the chain instead of a node.
-		if errSet := ctrl.SetControllerReference(chainConfig, &kmsSecret, r.Scheme); errSet != nil {
+		if errSet := ctrl.SetControllerReference(chainNode, &kmsSecret, r.Scheme); errSet != nil {
 			logger.Error(errSet, "set controller reference failed")
 			return nil
 		}
@@ -545,13 +546,13 @@ func (r *ChainNodeReconciler) reconcileKmsSecret(
 	return nil
 }
 
-func buildKmsSecret(
+func buildNodeKmsSecret(
+	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
 	psecret *corev1.Secret,
 	kmsSecretName string) error {
 	// init parameters
-	// chainName := chainConfig.ObjectMeta.Name
-	secretString := chainConfig.Spec.KmsPassword
+	secretString := chainNode.Spec.KmsPassword
 	if secretString == "" {
 		return errors.New("ChainConfig.Spec.KmsPassword should not be empty")
 	}

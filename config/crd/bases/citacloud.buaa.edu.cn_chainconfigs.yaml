@@ -59,9 +59,6 @@ spec:
               kms_image:
                 description: Not allowed to change, any change will ignored
                 type: string
-              kms_pwd:
-                description: Kms password, change policy not set yet
-                type: string
               network_image:
                 description: Not allowed to change, any change will ignored
                 type: string
