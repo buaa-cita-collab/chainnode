@@ -280,6 +280,16 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									SubPath:   "consensus-log",
 									MountPath: "/data/consensus-log4rs.yaml",
 								},
+								{
+									Name:      "config",
+									SubPath:   "node_address",
+									MountPath: "/data/node_address",
+								},
+								{
+									Name:      "config",
+									SubPath:   "node_key",
+									MountPath: "/data/node_key",
+								},
 							},
 						},
 						{
@@ -374,6 +384,21 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									Name:      "config",
 									SubPath:   "controller-config",
 									MountPath: "/data/controller-config.toml",
+								},
+								{
+									Name:      "config",
+									SubPath:   "genesis",
+									MountPath: "/data/genesis.toml",
+								},
+								{
+									Name:      "config",
+									SubPath:   "init_sys_config",
+									MountPath: "/data/init_sys_config.toml",
+								},
+								{
+									Name:      "config",
+									SubPath:   "key_id",
+									MountPath: "/data/key_id",
 								},
 							},
 						},
@@ -525,7 +550,7 @@ func buildKmsSecret(
 	psecret *corev1.Secret,
 	kmsSecretName string) error {
 	// init parameters
-	chainName := chainConfig.ObjectMeta.Name
+	// chainName := chainConfig.ObjectMeta.Name
 	secretString := chainConfig.Spec.KmsPassword
 	if secretString == "" {
 		return errors.New("ChainConfig.Spec.KmsPassword should not be empty")
@@ -540,10 +565,10 @@ func buildKmsSecret(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kmsSecretName,
 			Namespace: "default",
-			Labels: map[string]string{
-				"chain_name":   chainName,
-				"secret_level": "chainconfig",
-			},
+			// Labels: map[string]string{
+			// 	"chain_name":   chainName,
+			// 	"secret_level": "chainconfig",
+			// },
 		},
 		Type: "Opaque",
 		Data: map[string][]byte{

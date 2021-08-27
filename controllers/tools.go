@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"bytes"
+	"encoding/hex"
+	"golang.org/x/crypto/sha3"
 	"text/template"
 )
 
@@ -22,4 +24,11 @@ func templateBuilder(
 	}
 
 	return buf.String(), nil
+}
+
+// Compute sha3_256 to a 0x started hex string
+func sha3_256HexString(data string) string {
+	d := sha3.Sum256([]byte(data))
+	h := "0x" + hex.EncodeToString(d[:])
+	return h
 }

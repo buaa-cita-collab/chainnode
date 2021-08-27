@@ -41,28 +41,6 @@ type ChainNodeReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// 节点级别的配置，每个节点在符合当前链的治理下，选择自己的个性化配置
-/*
-	pvcName // 此节点配置文件的路径
-	name // 节点的名字
-	chainconfig // 指定使用的链config
-	kms_password  // 节点的kms服务的密码
-	network-key // 节点的私钥
-	六个微服务的配置：包括：
-		is_std_out // 是否将日志输出到标准输出
-		log-level // 日志等级
-		以及其他可以各个节点不同的配置
-
-	service.port //服务的端口
-	service.eipName
-
-	// loadbanlancer，可以交由运维的人员来处理，
-		service.endIP //多集群
-		service.interface
-		service.startIP
-
-*/
-
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=citacloud.buaa.edu.cn,resources=chainnodes/finalizers,verbs=update
@@ -85,7 +63,7 @@ type ChainNodeReconciler struct {
 
 func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("start reconcile")
+	logger.Info("start chainnode reconcile")
 	var chainNode citacloudv1.ChainNode
 
 	// fetch chainNode
@@ -115,6 +93,13 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			logger.Error(err, "get chainconfig failed")
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// If chainConfig if not ready, then wait
+	// until next run
+	if !chainConfig.Status.Ready {
+		logger.Info("Waiting chain config to be ready")
+		return ctrl.Result{}, nil
 	}
 
 	if err := r.reconcileConfig(ctx, &chainNode, &chainConfig); err != nil {

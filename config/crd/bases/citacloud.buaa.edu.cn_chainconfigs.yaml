@@ -43,9 +43,7 @@ spec:
                 type: array
               block_interval:
                 description: Not allowed to change, any change will ignored
-                items:
-                  type: string
-                type: array
+                type: string
               consensus_image:
                 description: Not allowed to change, any change will ignored
                 type: string
@@ -54,12 +52,15 @@ spec:
                 type: string
               enable_tls:
                 description: Not allowed to change, any change will ignored
-                type: boolean
+                type: string
               executor_image:
                 description: Not allowed to change, any change will ignored
                 type: string
               kms_image:
                 description: Not allowed to change, any change will ignored
+                type: string
+              kms_pwd:
+                description: Kms password, change policy not set yet
                 type: string
               network_image:
                 description: Not allowed to change, any change will ignored
@@ -76,14 +77,19 @@ spec:
                 description: Not allowed to change, any change will ignored
                 type: string
               super_admin:
-                description: // Not working yet
+                description: Not working yet
                 type: string
               timestamp:
                 description: Not allowed to change, any change will ignored
-                type: integer
+                type: string
             type: object
           status:
             description: ChainConfigStatus defines the observed state of ChainConfig
+            properties:
+              ready:
+                description: ChainNode reconcile will only be called when ChainConfig
+                  is ready
+                type: boolean
             type: object
         type: object
     served: true

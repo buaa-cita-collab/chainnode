@@ -34,20 +34,20 @@ type ChainConfigSpec struct {
 	// Not working yet
 	Authorities []string `json:"authorities,omitempty"`
 
-	// // Not working yet
+	// Not working yet
 	SuperAdmin string `json:"super_admin,omitempty"`
 
 	// Not allowed to change, any change will ignored
-	BlockInterval []string `json:"block_interval,omitempty"`
+	BlockInterval string `json:"block_interval,omitempty"`
 
 	// Not allowed to change, any change will ignored
-	TimeStamp int `json:"timestamp,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
 
 	// Not allowed to change, any change will ignored
 	PrevHash string `json:"prevhash,omitempty"`
 
 	// Not allowed to change, any change will ignored
-	EnableTLS bool `json:"enable_tls,omitempty"`
+	EnableTLS string `json:"enable_tls,omitempty"`
 
 	// Can be changed
 	Nodes []string `json:"nodes,omitempty"`
@@ -69,12 +69,21 @@ type ChainConfigSpec struct {
 
 	// Not allowed to change, any change will ignored
 	KmsImage string `json:"kms_image,omitempty"`
+
+	// Kms password, change policy not set yet
+	KmsPassword string `json:"kms_pwd,omitempty"`
 }
 
 // ChainConfigStatus defines the observed state of ChainConfig
 type ChainConfigStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// ChainNode reconcile will only be called when
+	// ChainConfig is ready
+	Ready bool `json:"ready,omitempty"`
+
+	// TODO Backing up some fields to make sure it is can not be changed once set
 }
 
 //+kubebuilder:object:root=true

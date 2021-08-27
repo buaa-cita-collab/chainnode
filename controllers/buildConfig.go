@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -120,10 +121,28 @@ block_delay_number = 0`
 		return nil
 	}
 
+	initSysConfig, err := genInitSysConfig(chainNode, chainConfig)
+	if err != nil {
+		logger.Error(err, "Building init sys config failed")
+		return nil
+	}
+
+	// key_id is not configurable
+	keyID := "0"
+
 	kmsLog, err := genLogConfig(chainNode, chainConfig, "kms")
 	if err != nil {
 		logger.Error(err, "Building kms log config failed")
 		return nil
+	}
+	nodeAddress := chainNode.Spec.NodeAddress
+	if nodeAddress == "" {
+		return errors.New("node address should not be empty")
+	}
+
+	nodeKey := chainNode.Spec.NodeKey
+	if nodeAddress == "" {
+		return errors.New("node key should not be empty")
 	}
 
 	networkConfig, err := genNetworkConfig(chainNode, chainConfig)
@@ -155,11 +174,15 @@ block_delay_number = 0`
 			"controller-config": controllerConfig,
 			"controller-log":    controllerLog,
 			"executor-log":      executorLog,
-			"kms-log":           kmsLog,
+			"genesis":           genesisConfig,
+			"init_sys_config":   initSysConfig,
+			"key_id":            keyID,
+			"kms_log":           kmsLog,
 			"network-config":    networkConfig,
 			"network-log":       networkLog,
+			"node_address":      nodeKey,
+			"node_key":          nodeKey,
 			"storage-log":       storageLog,
-			"genesis":           genesisConfig,
 		},
 	}
 	config.DeepCopyInto(pconfig)
@@ -172,11 +195,43 @@ func genGenesisConfig(
 	chainConfig *citacloudv1.ChainConfig,
 ) (string, error) {
 
-	templateString := `
-timestamp = 1626417162942
-prevhash = "0x0000000000000000000000000000000000000000000000000000000000000000`
+	data := map[string]string{
+		"timestamp": chainConfig.Spec.Timestamp,
+		"prevhash":  chainConfig.Spec.PrevHash,
+	}
 
-	return templateBuilder(templateString, nil)
+	templateString := `timestamp = {{.timestamp}}
+prevhash = "{{.prevhash}}"`
+
+	return templateBuilder(templateString, data)
+}
+
+type initSysData struct {
+	ChainID       string
+	Validators    []string
+	Admin         string
+	BlockInterval string
+}
+
+// generate init_sys_config.toml
+func genInitSysConfig(
+	chainNode *citacloudv1.ChainNode,
+	chainConfig *citacloudv1.ChainConfig,
+) (string, error) {
+
+	data := initSysData{
+		ChainID:       sha3_256HexString(chainConfig.ObjectMeta.Name),
+		Validators:    chainConfig.Spec.Authorities,
+		Admin:         chainConfig.Spec.SuperAdmin,
+		BlockInterval: chainConfig.Spec.BlockInterval,
+	}
+
+	templateString := `version = 0
+chain_id = "{{.ChainID}}"
+admin = "{{.Admin}}"
+block_interval = {{.BlockInterval}}
+validators = [{{range $_,$v := .Validators}}"{{$v}}", {{end}}]`
+	return templateBuilder(templateString, data)
 }
 
 // generate network-config.toml
@@ -215,8 +270,14 @@ func genLogConfig(
 	serviceName string,
 ) (string, error) {
 
+	level := "info"
+	if chainNode.Spec.LogLevel != "" {
+		level = chainNode.Spec.LogLevel
+	}
+
 	configs := map[string]string{
 		"serviceName": serviceName,
+		"level":       level,
 	}
 
 	templateString := `# Scan this file for changes every 30 seconds
@@ -247,7 +308,7 @@ appenders:
 
 # Set the default logging level and attach the default appender to the root
 root:
-  level: info
+  level: {{.level}}
   appenders:
     - journey-service`
 

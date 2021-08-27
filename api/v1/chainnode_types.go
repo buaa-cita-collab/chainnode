@@ -54,7 +54,7 @@ type ChainNodeSpec struct {
 	// Can be updated
 	// Choose from AutoUpdate, NoUpdate
 	// Default to AutoUpdate
-    UpdatePoilcy string `json:"update_policy,omitempty"`
+	UpdatePoilcy string `json:"update_policy,omitempty"`
 }
 
 // ChainNodeStatus defines the observed state of ChainNode
