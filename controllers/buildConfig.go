@@ -141,7 +141,7 @@ block_delay_number = 0`
 	}
 
 	nodeKey := chainNode.Spec.NodeKey
-	if nodeAddress == "" {
+	if nodeKey == "" {
 		return errors.New("node key should not be empty")
 	}
 
@@ -177,10 +177,10 @@ block_delay_number = 0`
 			"genesis":           genesisConfig,
 			"init_sys_config":   initSysConfig,
 			"key_id":            keyID,
-			"kms_log":           kmsLog,
+			"kms-log":           kmsLog,
 			"network-config":    networkConfig,
 			"network-log":       networkLog,
-			"node_address":      nodeKey,
+			"node_address":      nodeAddress,
 			"node_key":          nodeKey,
 			"storage-log":       storageLog,
 		},

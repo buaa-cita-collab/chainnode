@@ -66,6 +66,7 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// chainConfig.Status.Ready indicates that default
 	// value settings has been done before
 	if chainConfig.Status.Ready {
+		logger.Info("status ready")
 		return ctrl.Result{}, nil
 	}
 
@@ -86,7 +87,7 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		chainConfig.Spec.PrevHash = "0x0000000000000000000000000000000000000000000000000000000000000000"
 	}
 	if chainConfig.Spec.EnableTLS == "" {
-		chainConfig.Spec.Timestamp = "true"
+		chainConfig.Spec.EnableTLS = "true"
 	}
 
 	// Set ready flag
@@ -98,7 +99,29 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	logger.Info("chainconfig status ready", "ready:", chainConfig.Status.Ready)
+	// verify
+	// var chainC citacloudv1.ChainConfig
+	// if err := r.Get(ctx, req.NamespacedName, &chainC); err != nil {
+	// 	logger.Error(err, "re get chain config failed")
+	// 	return ctrl.Result{}, nil
+	// } else {
+	// 	logger.Info("verify", "after write", chainConfig.Status.Ready, "read", chainC.Status.Ready)
+	// }
+
+	// And write status back
+	if err := r.Status().Update(ctx, &chainConfig); err != nil {
+		logger.Error(err, "update chain config failed")
+		return ctrl.Result{}, nil
+	}
+
+	// verify
+	// if err := r.Get(ctx, req.NamespacedName, &chainC); err != nil {
+	// 	logger.Error(err, "re get chain config failed")
+	// 	return ctrl.Result{}, nil
+	// } else {
+	// 	logger.Info("verify", "after write status", chainConfig.Status.Ready, "read", chainC.Status.Ready)
+	// }
+
 	return ctrl.Result{}, nil
 }
 

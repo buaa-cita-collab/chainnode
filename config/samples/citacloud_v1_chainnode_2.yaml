@@ -9,5 +9,5 @@ spec:
   network_key: MHg4OTU0M2IxMWUzMDliNzMzNTdhODhkYmQyNGFkNWU2YTM2ZjBjMjdhMzY1MTg5N2ZjNzlhNDk5MzgwZjdhYmRm
   node_address: "0xa28a34965e85fae561e3f05c7c311a7e34a58777"
   node_key: "0xd0f1efa1246635b023f30d0b7168cc5793fc57802143a2f59d3e5b4b1ae8f621"
-  kms_pwd: "MTIzNDU2"
+  kms_pwd: "123456"
   # update_policy: 

@@ -566,10 +566,6 @@ func buildNodeKmsSecret(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kmsSecretName,
 			Namespace: "default",
-			// Labels: map[string]string{
-			// 	"chain_name":   chainName,
-			// 	"secret_level": "chainconfig",
-			// },
 		},
 		Type: "Opaque",
 		Data: map[string][]byte{
