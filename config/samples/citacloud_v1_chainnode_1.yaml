@@ -5,4 +5,9 @@ metadata:
 spec:
   # Add fields here
   configname: chainconfig-sample
+  # log_level: info
   network_key: MHgyYjBhZWZkNTgzYWI4MWNkYzAxZjMxYjBjNmMwMDIyZDBkMDY1OTc2YWY2ZWM5Njk4ZmUxYTU0NDc3YmFhYTA3
+  node_address: "0xab0ea7ecc9aa0d2b95777009bd2b0cc3b745f0f8"
+  node_key: "0xdcf4e0ee9e4830279299a931c7f4c8cbb52f3d7f5bfe199188d6ce42c2b6a799"
+  kms_pwd: "MTIzNDU2"
+  # update_policy: 

@@ -34,6 +34,7 @@ type ChainNodeSpec struct {
 	ConfigName string `json:"configname,omitempty"`
 
 	// Can be changed
+	// Can be empty
 	LogLevel string `json:"log_level,omitempty"`
 
 	// Network secret
@@ -54,6 +55,7 @@ type ChainNodeSpec struct {
 	// Can be updated
 	// Choose from AutoUpdate, NoUpdate
 	// Default to AutoUpdate
+	// Can be empty
 	UpdatePoilcy string `json:"update_policy,omitempty"`
 }
 

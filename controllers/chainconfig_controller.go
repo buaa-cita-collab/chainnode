@@ -98,6 +98,7 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	logger.Info("chainconfig status ready", "ready:", chainConfig.Status.Ready)
 	return ctrl.Result{}, nil
 }
 

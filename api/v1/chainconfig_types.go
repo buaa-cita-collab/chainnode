@@ -38,15 +38,18 @@ type ChainConfigSpec struct {
 	SuperAdmin string `json:"super_admin,omitempty"`
 
 	// Not allowed to change, any change will ignored
+	//
 	BlockInterval string `json:"block_interval,omitempty"`
 
 	// Not allowed to change, any change will ignored
 	Timestamp string `json:"timestamp,omitempty"`
 
 	// Not allowed to change, any change will ignored
+	// Can be empty
 	PrevHash string `json:"prevhash,omitempty"`
 
 	// Not allowed to change, any change will ignored
+	// Can be empty
 	EnableTLS string `json:"enable_tls,omitempty"`
 
 	// Can be changed

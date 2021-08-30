@@ -18,7 +18,7 @@ spec:
   storageClassName: local-storage
   local:
     # path: /root/cita-cloud-datadir
-    path: /home/ffff/cita-cloud-datadir
+    path: /root/cita-cloud-datadir
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -27,7 +27,7 @@ spec:
           operator: In
           values:
             #- cita-cloud-k8s
-          - fffflu2004
+          - cita-cloud-k8s
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

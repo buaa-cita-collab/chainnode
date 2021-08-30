@@ -51,7 +51,8 @@ spec:
                 description: Not allowed to change, any change will ignored
                 type: string
               enable_tls:
-                description: Not allowed to change, any change will ignored
+                description: Not allowed to change, any change will ignored Can be
+                  empty
                 type: string
               executor_image:
                 description: Not allowed to change, any change will ignored
@@ -68,7 +69,8 @@ spec:
                   type: string
                 type: array
               prevhash:
-                description: Not allowed to change, any change will ignored
+                description: Not allowed to change, any change will ignored Can be
+                  empty
                 type: string
               storage_image:
                 description: Not allowed to change, any change will ignored

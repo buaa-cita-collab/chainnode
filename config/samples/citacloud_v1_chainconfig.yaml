@@ -4,7 +4,15 @@ metadata:
   name: chainconfig-sample
 spec:
   # Add fields here
-  kms_password: "123456"
+  authorities: 
+  - "0x2587d77a67d39ced4dee34bf5ad7e6cddff4d206"
+  - "0xab0ea7ecc9aa0d2b95777009bd2b0cc3b745f0f8"
+  - "0xa28a34965e85fae561e3f05c7c311a7e34a58777"
+  super_admin: "0x73f003e2ef1988e52831153873785444b2afbf31"
+  # block_interval: "3"
+  timestamp: "1626417162942"
+  # prevhash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+  # enable_tls: "true"
   network_image: citacloud/network_direct:v6.0.0
   consensus_image: citacloud/consensus_bft:v6.0.0
   executor_image: citacloud/executor_evm:v6.1.0

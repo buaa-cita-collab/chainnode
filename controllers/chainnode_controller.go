@@ -19,7 +19,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
+
 	// appv1 "k8s.io/api/apps/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -128,8 +130,6 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 // SetupWithManager sets up the controller with the Manager.
 func (r *ChainNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&citacloudv1.ChainNode{}).
-		Owns(&appv1.Deployment{}).
 		Watches(&source.Kind{Type: &citacloudv1.ChainConfig{}},
 			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []ctrl.Request {
 				// fmt.Println("map func called", obj.GetNamespace(), obj.GetName())
@@ -159,5 +159,7 @@ func (r *ChainNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return reqList
 			})).
 		//Watches(&source.Kind{Type: &citacloudv1.ChainConfig{}}, &handler.EnqueueRequestForObject{}).
+		For(&citacloudv1.ChainNode{}).
+		Owns(&appv1.Deployment{}).
 		Complete(r)
 }
