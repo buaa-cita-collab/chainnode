@@ -64,11 +64,14 @@ spec:
           status:
             description: ChainNodeStatus defines the observed state of ChainNode
             properties:
-              node_count:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file Total nodes count of a chain including itself string!!!'
+              log_level:
+                description: The back up of log level
                 type: string
+              nodes:
+                description: The back up of log level
+                items:
+                  type: string
+                type: array
             type: object
         type: object
     served: true

@@ -63,9 +63,12 @@ type ChainNodeSpec struct {
 type ChainNodeStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	// Total nodes count of a chain including itself
-	// string!!!
-	NodeCount string `json:"node_count,omitempty"`
+
+	// The back up of log level
+	Nodes []string `json:"nodes,omitempty"`
+
+	// The back up of log level
+	LogLevel string `json:"log_level,omitempty"`
 }
 
 //+kubebuilder:object:root=true

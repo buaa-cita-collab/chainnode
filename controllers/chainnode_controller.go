@@ -70,7 +70,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	// fetch chainNode
 	if err := r.Get(ctx, req.NamespacedName, &chainNode); err != nil {
-		logger.Error(err, "get ChainNode failed")
+		logger.Info("chain node " + req.Name + " has been deleted")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -90,7 +90,7 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err := r.Get(ctx, configKey, &chainConfig); err != nil {
 		if apierror.IsNotFound(err) {
 			//dont show too much info if it is a not found error
-			logger.Info("can not find chainconfig")
+			logger.Info("can not find chainconfig " + configName)
 		} else {
 			logger.Error(err, "get chainconfig failed")
 		}
@@ -104,12 +104,24 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.reconcileConfig(ctx, &chainNode, &chainConfig); err != nil {
+	// Checking chainNode update policy
+	if chainNode.Spec.UpdatePoilcy != AutoUpdate && chainNode.Spec.UpdatePoilcy != NoUpdate {
+		logger.Info("update policy not set or illegal, set to default AutoUpdate")
+		chainNode.Spec.UpdatePoilcy = AutoUpdate
+		if err := r.Update(ctx, &chainNode); err != nil {
+			logger.Error(err, "update chainNode failed")
+			return ctrl.Result{}, nil
+		}
+	}
+
+	restartFlag := false
+
+	if err := r.reconcileConfig(ctx, &chainNode, &chainConfig, &restartFlag); err != nil {
 		logger.Error(err, "reconcile config failed")
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig); err != nil {
+	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig, &restartFlag); err != nil {
 		logger.Error(err, "reconcile node deployment failed")
 		return ctrl.Result{}, nil
 	}

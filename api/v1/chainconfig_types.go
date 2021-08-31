@@ -31,27 +31,34 @@ type ChainConfigSpec struct {
 	// This field is deleted, use ChainNode.ObjectMeta.Name as chainname instead
 	// ChainName       string   `json:"chain_name,omitempty"`
 
-	// Not working yet
+	// init_sys_config.toml: validators
 	Authorities []string `json:"authorities,omitempty"`
 
-	// Not working yet
+	// init_sys_config.toml: admin
 	SuperAdmin string `json:"super_admin,omitempty"`
 
+	// init_sys_config.toml: block_interval
 	// Not allowed to change, any change will ignored
-	//
+	// Can be empty, default to 3
 	BlockInterval string `json:"block_interval,omitempty"`
 
+	// genesis.toml: timestamp
 	// Not allowed to change, any change will ignored
+	// Can be empty, default to unix_now*1000
 	Timestamp string `json:"timestamp,omitempty"`
 
+	// genesis.toml: prevhash
 	// Not allowed to change, any change will ignored
-	// Can be empty
+	// Can be empty, default to  "0x00000000000000000
+	// 00000000000000000000000000000000000000000000000"
 	PrevHash string `json:"prevhash,omitempty"`
 
+	// network-config.toml: enable_tls
 	// Not allowed to change, any change will ignored
-	// Can be empty
+	// Can be empty, default to true
 	EnableTLS string `json:"enable_tls,omitempty"`
 
+	// network-config.toml: peers
 	// Can be changed
 	Nodes []string `json:"nodes,omitempty"`
 

@@ -7,3 +7,9 @@ const (
 	updateNeeded  = "updateNeeded"
 	rebuildNeeded = "rebuildNeeded"
 )
+
+// Update Policy
+const (
+	AutoUpdate = "AutoUpdate"
+	NoUpdate   = "NoUpdate"
+)

@@ -37,12 +37,13 @@ spec:
             description: ChainConfigSpec defines the desired state of ChainConfig
             properties:
               authorities:
-                description: Not working yet
+                description: 'init_sys_config.toml: validators'
                 items:
                   type: string
                 type: array
               block_interval:
-                description: Not allowed to change, any change will ignored
+                description: 'init_sys_config.toml: block_interval Not allowed to
+                  change, any change will ignored Can be empty, default to 3'
                 type: string
               consensus_image:
                 description: Not allowed to change, any change will ignored
@@ -51,8 +52,8 @@ spec:
                 description: Not allowed to change, any change will ignored
                 type: string
               enable_tls:
-                description: Not allowed to change, any change will ignored Can be
-                  empty
+                description: 'network-config.toml: enable_tls Not allowed to change,
+                  any change will ignored Can be empty, default to true'
                 type: string
               executor_image:
                 description: Not allowed to change, any change will ignored
@@ -64,22 +65,23 @@ spec:
                 description: Not allowed to change, any change will ignored
                 type: string
               nodes:
-                description: Can be changed
+                description: 'network-config.toml: peers Can be changed'
                 items:
                   type: string
                 type: array
               prevhash:
-                description: Not allowed to change, any change will ignored Can be
-                  empty
+                description: 'genesis.toml: prevhash Not allowed to change, any change
+                  will ignored Can be empty, default to  "0x00000000000000000 00000000000000000000000000000000000000000000000"'
                 type: string
               storage_image:
                 description: Not allowed to change, any change will ignored
                 type: string
               super_admin:
-                description: Not working yet
+                description: 'init_sys_config.toml: admin'
                 type: string
               timestamp:
-                description: Not allowed to change, any change will ignored
+                description: 'genesis.toml: timestamp Not allowed to change, any change
+                  will ignored Can be empty, default to unix_now*1000'
                 type: string
             type: object
           status:

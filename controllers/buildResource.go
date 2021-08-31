@@ -11,13 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strconv"
+	// "strconv"
 )
 
 func (r *ChainNodeReconciler) reconcileNodeDeployment(
 	ctx context.Context,
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
+	prestartFlag *bool,
 ) error {
 
 	logger := log.FromContext(ctx)
@@ -42,14 +43,14 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 	} else {
 		// Deployment found
 
-		if chainNode.Status.NodeCount != strconv.Itoa(len(chainConfig.Spec.Nodes)) {
+		if *prestartFlag {
 			operation = rebuildNeeded
 		}
 	}
 
 	logger.Info("operation: " + operation)
 
-	// do the operation
+	// Do the operation
 	if operation == buildNeeded || operation == rebuildNeeded {
 		if operation == rebuildNeeded {
 			logger.Info("enter rebuild")
@@ -59,8 +60,8 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 			} else {
 				logger.Info("delete deployment succeed")
 			}
-
 		}
+
 		// build deployment
 		if errBuild := buildNodeDeployment(chainNode,
 			chainConfig, &deployment, deploymentName); errBuild != nil {
@@ -82,15 +83,16 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 			logger.Info("create deployment succeed")
 		}
 
-		if operation == rebuildNeeded || operation == buildNeeded {
-			// update node count
-			chainNode.Status.NodeCount = strconv.Itoa(len(chainConfig.Spec.Nodes))
-			if errUpdate := r.Status().Update(ctx, chainNode); errUpdate != nil {
-				logger.Error(errUpdate, "updatr status failed")
-			} else {
-				logger.Info("update status succeed")
-			}
-		}
+		// this operation is moved to buildConfig
+		// if operation == rebuildNeeded || operation == buildNeeded {
+		// 	// update node count
+		// 	chainNode.Status.NodeCount = strconv.Itoa(len(chainConfig.Spec.Nodes))
+		// 	if errUpdate := r.Status().Update(ctx, chainNode); errUpdate != nil {
+		// 		logger.Error(errUpdate, "updatr status failed")
+		// 	} else {
+		// 		logger.Info("update status succeed")
+		// 	}
+		// }
 	} else if operation == updateNeeded {
 		if errUpdate := r.Update(ctx, &deployment); errUpdate != nil {
 			logger.Error(errUpdate, "Update deployment failed")

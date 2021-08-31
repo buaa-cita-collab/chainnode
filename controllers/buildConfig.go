@@ -10,18 +10,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strconv"
+	// "strconv"
 )
 
 func (r *ChainNodeReconciler) reconcileConfig(
 	ctx context.Context,
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
+	prestartFlag *bool,
 ) error {
-	// config is mapped into the following files
-	// network-config.toml
-	// network-log4rs.toml
-
 	logger := log.FromContext(ctx)
 	nodeName := chainNode.ObjectMeta.Name
 	operation := nothingNeeded
@@ -29,6 +26,7 @@ func (r *ChainNodeReconciler) reconcileConfig(
 	var config corev1.ConfigMap
 	configName := nodeName + "-config"
 
+	// checking config to make sure operation needed
 	if err := r.Get(ctx, types.NamespacedName{
 		Namespace: "default",
 		Name:      configName,
@@ -36,13 +34,25 @@ func (r *ChainNodeReconciler) reconcileConfig(
 		// can not find configmap
 		if apierror.IsNotFound(err) {
 			operation = buildNeeded
+			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
+			if chainNode.Spec.UpdatePoilcy == "AutoUpdate" ||
+				len(chainNode.Status.Nodes) == 0 {
+				chainNode.Status.Nodes = make([]string, len(chainConfig.Spec.Nodes))
+				copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
+			}
 		} else {
 			logger.Info("Error fetch configmap")
 			return err
 		}
 	} else {
-		if chainNode.Status.NodeCount != strconv.Itoa(len(chainConfig.Spec.Nodes)) {
+		if chainNode.Spec.LogLevel != chainNode.Status.LogLevel {
 			operation = updateNeeded
+			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
+		} else if chainNode.Spec.UpdatePoilcy == AutoUpdate &&
+			len(chainNode.Status.Nodes) != len(chainConfig.Spec.Nodes) {
+			operation = updateNeeded
+			chainNode.Status.Nodes = make([]string, len(chainConfig.Spec.Nodes))
+			copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
 		}
 	}
 
@@ -50,6 +60,8 @@ func (r *ChainNodeReconciler) reconcileConfig(
 	if operation == nothingNeeded {
 		return nil
 	}
+
+	*prestartFlag = true
 
 	if err := buildConfig(chainNode, chainConfig,
 		&config, configName, logger); err != nil {
@@ -72,6 +84,12 @@ func (r *ChainNodeReconciler) reconcileConfig(
 			logger.Info("Update configmap succeed")
 		}
 	}
+
+	// Writing back status
+	if err := r.Status().Update(ctx, chainNode); err != nil {
+		logger.Error(err, "Writing back status failed")
+	}
+
 	return nil
 }
 
@@ -135,6 +153,7 @@ block_delay_number = 0`
 		logger.Error(err, "Building kms log config failed")
 		return nil
 	}
+
 	nodeAddress := chainNode.Spec.NodeAddress
 	if nodeAddress == "" {
 		return errors.New("node address should not be empty")
@@ -247,8 +266,8 @@ ip = "{{ $node }}"
 port = 40000
 {{ end }}`
 
-	nodesIgnoreSelf := make([]string, 0, len(chainConfig.Spec.Nodes))
-	for _, node := range chainConfig.Spec.Nodes {
+	nodesIgnoreSelf := make([]string, 0, len(chainNode.Status.Nodes))
+	for _, node := range chainNode.Status.Nodes {
 		if node == chainNode.ObjectMeta.Name { // is current node
 			continue
 		}

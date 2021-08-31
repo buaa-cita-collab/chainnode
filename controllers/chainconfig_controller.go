@@ -59,7 +59,8 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// Fetching chainConfig
 	if err := r.Get(ctx, req.NamespacedName, &chainConfig); err != nil {
-		logger.Error(err, "get ChainConfig failed")
+		logger.Info("chain config " + req.Name + " has been deleted")
+		//logger.Error(err, "get ChainConfig failed")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
