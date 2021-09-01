@@ -64,10 +64,8 @@ type ChainNodeStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// The back up of log level
+	// Back up some fields to detect change
 	Nodes []string `json:"nodes,omitempty"`
-
-	// The back up of log level
 	LogLevel string `json:"log_level,omitempty"`
 }
 

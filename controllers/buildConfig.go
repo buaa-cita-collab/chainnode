@@ -45,14 +45,29 @@ func (r *ChainNodeReconciler) reconcileConfig(
 			return err
 		}
 	} else {
+		// Compare configs
+		// changed config                         | operation
+		// ChainNode.Spec.LogLevel                | update
+		// ChainConfig.Spec.Nodes(when autoUpdate)| update
+		// ChainNode.Spec.NodeKey                 | update
+		// ChainNode.Spec.NodeAddress             | update
+
+		// If the operation is updateNeeded, do updates here
+		// If the change is related to backup, do not write
+		// in "else if", else please write in else if 
 		if chainNode.Spec.LogLevel != chainNode.Status.LogLevel {
 			operation = updateNeeded
 			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
-		} else if chainNode.Spec.UpdatePoilcy == AutoUpdate &&
-			len(chainNode.Status.Nodes) != len(chainConfig.Spec.Nodes) {
+		}
+		if chainNode.Spec.UpdatePoilcy == AutoUpdate &&
+			!stringSliceEqual(chainNode.Status.Nodes,chainConfig.Spec.Nodes) {
 			operation = updateNeeded
 			chainNode.Status.Nodes = make([]string, len(chainConfig.Spec.Nodes))
 			copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
+		} else if chainNode.Spec.NodeKey!=config.Data[nodeKeyKey] {
+			operation = updateNeeded
+		} else if chainNode.Spec.NodeAddress!=config.Data[nodeAddressKey] {
+			operation = updateNeeded
 		}
 	}
 
@@ -199,8 +214,8 @@ block_delay_number = 0`
 			"kms-log":           kmsLog,
 			"network-config":    networkConfig,
 			"network-log":       networkLog,
-			"node_address":      nodeAddress,
-			"node_key":          nodeKey,
+			nodeAddressKey:      nodeAddress,
+			nodeKeyKey:          nodeKey,
 			"storage-log":       storageLog,
 		},
 	}

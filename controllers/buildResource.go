@@ -510,9 +510,8 @@ func (r *ChainNodeReconciler) reconcileNodeKmsSecret(
 		// Secret found
 
 		// Compare configs
-		// TODO compare more configuration
 		// changed config               | operation
-		// ChainConfig.Spec.KmsPassword | update
+		// ChainNode.Spec.KmsPassword | update
 
 		// If the operation is updateNeeded, do updates here
 		if string(kmsSecret.Data["key_file"]) != chainNode.Spec.KmsPassword {
@@ -608,12 +607,11 @@ func (r *ChainNodeReconciler) reconcileNodeNetworkSecret(
 		// Secret found
 
 		// Compare configs
-		// TODO compare more configuration
 		// changed config            | operation
 		// ChainNode.Spec.NetworkKey | update
 
 		// If the operation is updateNeeded, do updates here
-		if string(networkSecret.Data["network-key"]) == chainNode.Spec.NetworkKey {
+		if string(networkSecret.Data["network-key"]) != chainNode.Spec.NetworkKey {
 			operation = updateNeeded
 			networkSecret.Data["network-key"] = []byte(chainNode.Spec.NetworkKey)
 		}
