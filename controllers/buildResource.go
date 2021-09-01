@@ -402,6 +402,11 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 									SubPath:   "key_id",
 									MountPath: "/data/key_id",
 								},
+								{
+									Name:      "config",
+									SubPath:   "node_address",
+									MountPath: "/data/node_address",
+								},
 							},
 						},
 						{
