@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
+	"github.com/go-logr/logr"
 )
 
 // ChainConfigReconciler reconciles a ChainConfig object
@@ -64,12 +66,8 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// chainConfig.Status.Ready indicates that default
-	// value settings has been done before
-	if chainConfig.Status.Ready {
-		logger.Info("status ready")
-		return ctrl.Result{}, nil
-	}
+	changed := false
+	statusChanged := false
 
 	// Setting default values including:
 	// Field              Value
@@ -77,27 +75,47 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Timestamp          unix_now*1000(string)
 	// PrevHash            "0x0000000000000000000000000000000000000000000000000000000000000000"
 	// EnableTLS          True
-	if chainConfig.Spec.BlockInterval == "" {
+	if chainConfig.Spec.BlockInterval == "" &&
+		chainConfig.Status.BlockInterval == "" {
 		chainConfig.Spec.BlockInterval = "3"
+		changed = true
 	}
-	if chainConfig.Spec.Timestamp == "" {
+	if chainConfig.Spec.Timestamp == "" &&
+		chainConfig.Status.Timestamp == "" {
 		ts := strconv.FormatInt(time.Now().Unix()*1000, 10)
 		chainConfig.Spec.Timestamp = ts
+		changed = true
 	}
-	if chainConfig.Spec.PrevHash == "" {
+	if chainConfig.Spec.PrevHash == "" &&
+		chainConfig.Status.PrevHash == "" {
 		chainConfig.Spec.PrevHash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+		changed = true
 	}
-	if chainConfig.Spec.EnableTLS == "" {
+	if chainConfig.Spec.EnableTLS == "" &&
+		chainConfig.Status.EnableTLS == "" {
 		chainConfig.Spec.EnableTLS = "true"
+		changed = true
 	}
 
-	// Set ready flag
-	chainConfig.Status.Ready = true
+	// Set backup or restore unchangeable value from backup
+	setRestoreBackup(&chainConfig, logger, &changed,
+		&statusChanged)
 
+	// chainConfig.Status.Ready indicates that default
+	// value settings has been done before so it does
+	// not needs to be done this time.
+	if !chainConfig.Status.Ready {
+		// Set ready flag
+		logger.Info("status ready")
+		chainConfig.Status.Ready = true
+		statusChanged = true
+	}
 	// And write back
-	if err := r.Update(ctx, &chainConfig); err != nil {
-		logger.Error(err, "update chain config failed")
-		return ctrl.Result{}, nil
+	if changed {
+		if err := r.Update(ctx, &chainConfig); err != nil {
+			logger.Error(err, "update chain config failed")
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// verify
@@ -110,9 +128,11 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// }
 
 	// And write status back
-	if err := r.Status().Update(ctx, &chainConfig); err != nil {
-		logger.Error(err, "update chain config failed")
-		return ctrl.Result{}, nil
+	if statusChanged {
+		if err := r.Status().Update(ctx, &chainConfig); err != nil {
+			logger.Error(err, "update chain config failed")
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// verify
@@ -124,6 +144,164 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// }
 
 	return ctrl.Result{}, nil
+}
+
+func setRestoreBackup(
+	chainConfig *citacloudv1.ChainConfig,
+	logger logr.Logger,
+	pchanged *bool,
+	pStatusChanged *bool,
+) {
+	// Write to Status to backup if backup is not set
+	// Compare to Status to restore some fields that
+	// should be not *pchanged
+	if len(chainConfig.Status.Authorities) == 0 {
+		chainConfig.Status.Authorities = make([]string, len(chainConfig.Spec.Authorities))
+		copy(chainConfig.Status.Authorities, chainConfig.Spec.Authorities)
+		*pStatusChanged = true
+	} else if !stringSliceEqual(chainConfig.Spec.Authorities,
+		chainConfig.Status.Authorities) {
+		logger.Info("Authorities change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.Authorities) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.Authorities),
+		)
+		chainConfig.Spec.Authorities = make([]string, len(chainConfig.Status.Authorities))
+		copy(chainConfig.Spec.Authorities, chainConfig.Status.Authorities)
+		*pchanged = true
+	}
+	if chainConfig.Status.SuperAdmin == "" {
+		chainConfig.Status.SuperAdmin = chainConfig.Spec.SuperAdmin
+		*pStatusChanged = true
+	} else if chainConfig.Spec.SuperAdmin != chainConfig.Status.SuperAdmin {
+		logger.Info("SuperAdmin change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.SuperAdmin) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.SuperAdmin),
+		)
+		chainConfig.Spec.SuperAdmin = chainConfig.Status.SuperAdmin
+		*pchanged = true
+	}
+	if chainConfig.Status.BlockInterval == "" {
+		chainConfig.Status.BlockInterval = chainConfig.Spec.BlockInterval
+		*pStatusChanged = true
+	} else if chainConfig.Spec.BlockInterval != chainConfig.Status.BlockInterval {
+		logger.Info("BlockInterval change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.BlockInterval) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.BlockInterval),
+		)
+		chainConfig.Spec.BlockInterval = chainConfig.Status.BlockInterval
+		*pchanged = true
+	}
+	if chainConfig.Status.Timestamp == "" {
+		chainConfig.Status.Timestamp = chainConfig.Spec.Timestamp
+		*pStatusChanged = true
+	} else if chainConfig.Spec.Timestamp != chainConfig.Status.Timestamp {
+		logger.Info("Timestamp change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.Timestamp) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.Timestamp),
+		)
+		chainConfig.Spec.Timestamp = chainConfig.Status.Timestamp
+		*pchanged = true
+	}
+	if chainConfig.Status.PrevHash == "" {
+		chainConfig.Status.PrevHash = chainConfig.Spec.PrevHash
+		*pStatusChanged = true
+	} else if chainConfig.Spec.PrevHash != chainConfig.Status.PrevHash {
+		logger.Info("PrevHash change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.PrevHash) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.PrevHash),
+		)
+		chainConfig.Spec.PrevHash = chainConfig.Status.PrevHash
+		*pchanged = true
+	}
+	if chainConfig.Status.EnableTLS == "" {
+		chainConfig.Status.EnableTLS = chainConfig.Spec.EnableTLS
+		*pStatusChanged = true
+	} else if chainConfig.Spec.EnableTLS != chainConfig.Status.EnableTLS {
+		logger.Info("EnableTLS change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.EnableTLS) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.EnableTLS),
+		)
+		chainConfig.Spec.EnableTLS = chainConfig.Status.EnableTLS
+		*pchanged = true
+	}
+	if chainConfig.Status.NetworkImage == "" {
+		chainConfig.Status.NetworkImage = chainConfig.Spec.NetworkImage
+		*pStatusChanged = true
+	} else if chainConfig.Spec.NetworkImage != chainConfig.Status.NetworkImage {
+		logger.Info("NetworkImage change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.NetworkImage) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.NetworkImage),
+		)
+		chainConfig.Spec.NetworkImage = chainConfig.Status.NetworkImage
+		*pchanged = true
+	}
+	if chainConfig.Status.ConsensusImage == "" {
+		chainConfig.Status.ConsensusImage = chainConfig.Spec.ConsensusImage
+		*pStatusChanged = true
+	} else if chainConfig.Spec.ConsensusImage != chainConfig.Status.ConsensusImage {
+		logger.Info("ConsensusImage change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.ConsensusImage) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.ConsensusImage),
+		)
+		chainConfig.Spec.ConsensusImage = chainConfig.Status.ConsensusImage
+		*pchanged = true
+	}
+	if chainConfig.Status.ExecutorImage == "" {
+		chainConfig.Status.ExecutorImage = chainConfig.Spec.ExecutorImage
+		*pStatusChanged = true
+	} else if chainConfig.Spec.ExecutorImage != chainConfig.Status.ExecutorImage {
+		logger.Info("ExecutorImage change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.ExecutorImage) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.ExecutorImage),
+		)
+		chainConfig.Spec.ExecutorImage = chainConfig.Status.ExecutorImage
+		*pchanged = true
+	}
+	if chainConfig.Status.StorageImage == "" {
+		chainConfig.Status.StorageImage = chainConfig.Spec.StorageImage
+		*pStatusChanged = true
+	} else if chainConfig.Spec.StorageImage != chainConfig.Status.StorageImage {
+		logger.Info("StorageImage change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.StorageImage) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.StorageImage),
+		)
+		chainConfig.Spec.StorageImage = chainConfig.Status.StorageImage
+		*pchanged = true
+	}
+	if chainConfig.Status.ControllerImage == "" {
+		chainConfig.Status.ControllerImage = chainConfig.Spec.ControllerImage
+		*pStatusChanged = true
+	} else if chainConfig.Spec.ControllerImage != chainConfig.Status.ControllerImage {
+		logger.Info("ControllerImage change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.ControllerImage) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.ControllerImage),
+		)
+		chainConfig.Spec.ControllerImage = chainConfig.Status.ControllerImage
+		*pchanged = true
+	}
+	if chainConfig.Status.KmsImage == "" {
+		chainConfig.Status.KmsImage = chainConfig.Spec.KmsImage
+		*pStatusChanged = true
+	} else if chainConfig.Spec.KmsImage != chainConfig.Status.KmsImage {
+		logger.Info("KmsImage change detected, new values is " +
+			fmt.Sprint(chainConfig.Spec.KmsImage) +
+			", restored to " +
+			fmt.Sprint(chainConfig.Status.KmsImage),
+		)
+		chainConfig.Spec.KmsImage = chainConfig.Status.KmsImage
+		*pchanged = true
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

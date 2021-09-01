@@ -53,7 +53,8 @@ spec:
                 type: string
               enable_tls:
                 description: 'network-config.toml: enable_tls Not allowed to change,
-                  any change will ignored Can be empty, default to true'
+                  any change will ignored Can be empty, default to true This is a
+                  string,'
                 type: string
               executor_image:
                 description: Not allowed to change, any change will ignored
@@ -87,10 +88,38 @@ spec:
           status:
             description: ChainConfigStatus defines the observed state of ChainConfig
             properties:
+              authorities:
+                description: Backing up some fields to make sure it is can not be
+                  changed once set
+                items:
+                  type: string
+                type: array
+              block_interval:
+                type: string
+              consensus_image:
+                type: string
+              controller_image:
+                type: string
+              enable_tls:
+                type: string
+              executor_image:
+                type: string
+              kms_image:
+                type: string
+              network_image:
+                type: string
+              prevhash:
+                type: string
               ready:
                 description: ChainNode reconcile will only be called when ChainConfig
                   is ready
                 type: boolean
+              storage_image:
+                type: string
+              super_admin:
+                type: string
+              timestamp:
+                type: string
             type: object
         type: object
     served: true

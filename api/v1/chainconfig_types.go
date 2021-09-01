@@ -56,6 +56,7 @@ type ChainConfigSpec struct {
 	// network-config.toml: enable_tls
 	// Not allowed to change, any change will ignored
 	// Can be empty, default to true
+	// This is a string,
 	EnableTLS string `json:"enable_tls,omitempty"`
 
 	// network-config.toml: peers
@@ -90,7 +91,19 @@ type ChainConfigStatus struct {
 	// ChainConfig is ready
 	Ready bool `json:"ready,omitempty"`
 
-	// TODO Backing up some fields to make sure it is can not be changed once set
+	// Backing up some fields to make sure it is can not be changed once set
+	Authorities     []string `json:"authorities,omitempty"`
+	SuperAdmin      string   `json:"super_admin,omitempty"`
+	BlockInterval   string   `json:"block_interval,omitempty"`
+	Timestamp       string   `json:"timestamp,omitempty"`
+	PrevHash        string   `json:"prevhash,omitempty"`
+	EnableTLS       string   `json:"enable_tls,omitempty"`
+	NetworkImage    string   `json:"network_image,omitempty"`
+	ConsensusImage  string   `json:"consensus_image,omitempty"`
+	ExecutorImage   string   `json:"executor_image,omitempty"`
+	StorageImage    string   `json:"storage_image,omitempty"`
+	ControllerImage string   `json:"controller_image,omitempty"`
+	KmsImage        string   `json:"kms_image,omitempty"`
 }
 
 //+kubebuilder:object:root=true
