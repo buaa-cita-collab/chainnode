@@ -65,8 +65,8 @@ type ChainNodeStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Back up some fields to detect change
-	Nodes []string `json:"nodes,omitempty"`
-	LogLevel string `json:"log_level,omitempty"`
+	Nodes    []string `json:"nodes,omitempty"`
+	LogLevel string   `json:"log_level,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -65,10 +65,9 @@ spec:
             description: ChainNodeStatus defines the observed state of ChainNode
             properties:
               log_level:
-                description: The back up of log level
                 type: string
               nodes:
-                description: The back up of log level
+                description: Back up some fields to detect change
                 items:
                   type: string
                 type: array

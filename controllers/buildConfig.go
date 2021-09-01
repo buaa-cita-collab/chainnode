@@ -54,19 +54,19 @@ func (r *ChainNodeReconciler) reconcileConfig(
 
 		// If the operation is updateNeeded, do updates here
 		// If the change is related to backup, do not write
-		// in "else if", else please write in else if 
+		// in "else if", else please write in else if
 		if chainNode.Spec.LogLevel != chainNode.Status.LogLevel {
 			operation = updateNeeded
 			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
 		}
 		if chainNode.Spec.UpdatePoilcy == AutoUpdate &&
-			!stringSliceEqual(chainNode.Status.Nodes,chainConfig.Spec.Nodes) {
+			!stringSliceEqual(chainNode.Status.Nodes, chainConfig.Spec.Nodes) {
 			operation = updateNeeded
 			chainNode.Status.Nodes = make([]string, len(chainConfig.Spec.Nodes))
 			copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
-		} else if chainNode.Spec.NodeKey!=config.Data[nodeKeyKey] {
+		} else if chainNode.Spec.NodeKey != config.Data[nodeKeyKey] {
 			operation = updateNeeded
-		} else if chainNode.Spec.NodeAddress!=config.Data[nodeAddressKey] {
+		} else if chainNode.Spec.NodeAddress != config.Data[nodeAddressKey] {
 			operation = updateNeeded
 		}
 	}
