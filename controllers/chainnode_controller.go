@@ -121,18 +121,18 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig, &restartFlag); err != nil {
-		logger.Error(err, "reconcile node deployment failed")
-		return ctrl.Result{}, nil
-	}
-
-	if err := r.reconcileNodeKmsSecret(ctx, &chainNode, &chainConfig); err != nil {
+	if err := r.reconcileNodeKmsSecret(ctx, &chainNode, &chainConfig, &restartFlag); err != nil {
 		logger.Error(err, "reconcile kms Secret failed")
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.reconcileNodeNetworkSecret(ctx, &chainNode, &chainConfig); err != nil {
+	if err := r.reconcileNodeNetworkSecret(ctx, &chainNode, &chainConfig, &restartFlag); err != nil {
 		logger.Error(err, "reconcile node network secret failed")
+		return ctrl.Result{}, nil
+	}
+
+	if err := r.reconcileNodeDeployment(ctx, &chainNode, &chainConfig, &restartFlag); err != nil {
+		logger.Error(err, "reconcile node deployment failed")
 		return ctrl.Result{}, nil
 	}
 

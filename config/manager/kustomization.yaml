@@ -11,4 +11,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: f4prime/cloud_project
-  newTag: v0.0.5
+  newTag: v0.0.6

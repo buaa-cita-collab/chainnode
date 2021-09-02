@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"errors"
+
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	// "strconv"
 )
@@ -42,21 +44,30 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 		}
 	} else {
 		// Deployment found
-
 		if *prestartFlag {
 			operation = rebuildNeeded
 		}
 	}
 
+	if operation == nothingNeeded {
+		return nil
+	}
+
 	logger.Info("operation: " + operation)
 
 	// Do the operation
-	if operation == buildNeeded || operation == rebuildNeeded {
+	if operation == buildNeeded ||
+		operation == rebuildNeeded {
 		if operation == rebuildNeeded {
 			logger.Info("enter rebuild")
-			// delete old deploC:\Users\HP\AppData\Local\Temp\scp48502yment
-			if errDelete := r.Delete(ctx, &deployment); errDelete != nil {
-				logger.Error(errDelete, "delete deployment failed")
+			if errDelete := r.Delete(
+				ctx, &deployment,
+				client.PropagationPolicy(
+					metav1.DeletePropagationBackground,
+				),
+			); errDelete != nil {
+				logger.Error(errDelete,
+					"delete deployment failed")
 			} else {
 				logger.Info("delete deployment succeed")
 			}
@@ -65,14 +76,17 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 		// build deployment
 		if errBuild := buildNodeDeployment(chainNode,
 			chainConfig, &deployment, deploymentName); errBuild != nil {
-			logger.Error(errBuild, "Failed building node Deployment")
+			logger.Error(errBuild,
+				"Failed building node Deployment")
 			return nil
 		} else {
 			logger.Info("build deployment succeed")
 		}
 
-		if errSet := ctrl.SetControllerReference(chainNode, &deployment, r.Scheme); errSet != nil {
-			logger.Error(errSet, "set controller reference failed")
+		if errSet := ctrl.SetControllerReference(
+			chainNode, &deployment, r.Scheme); errSet != nil {
+			logger.Error(errSet,
+				"set controller reference failed")
 			return nil
 		}
 
@@ -95,7 +109,8 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 		// }
 	} else if operation == updateNeeded {
 		if errUpdate := r.Update(ctx, &deployment); errUpdate != nil {
-			logger.Error(errUpdate, "Update deployment failed")
+			logger.Error(errUpdate,
+				"Update deployment failed")
 			return nil
 		} else {
 			logger.Info("update deployment succeed")
@@ -493,10 +508,12 @@ func (r *ChainNodeReconciler) reconcileNodeKmsSecret(
 	ctx context.Context,
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
+	prestartFlag *bool,
 ) error {
 	logger := log.FromContext(ctx)
 	// test if the kmsSecret exists
-	kmsSecretName := chainConfig.ObjectMeta.Name + "-kms-secret"
+	kmsSecretName := chainConfig.ObjectMeta.Name +
+		"-kms-secret"
 	var kmsSecret corev1.Secret
 	operation := nothingNeeded
 	if err := r.Get(ctx, types.NamespacedName{
@@ -527,6 +544,7 @@ func (r *ChainNodeReconciler) reconcileNodeKmsSecret(
 
 	// Do operation
 	if operation == buildNeeded {
+		*prestartFlag = true
 		if errBuild := buildNodeKmsSecret(chainNode, chainConfig, &kmsSecret, kmsSecretName); errBuild != nil {
 			logger.Error(errBuild, "Failed building kms Secret")
 			return nil
@@ -587,6 +605,7 @@ func (r *ChainNodeReconciler) reconcileNodeNetworkSecret(
 	ctx context.Context,
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
+	prestartFlag *bool,
 ) error {
 	logger := log.FromContext(ctx)
 
@@ -624,6 +643,7 @@ func (r *ChainNodeReconciler) reconcileNodeNetworkSecret(
 
 	// Do operation
 	if operation == buildNeeded {
+		*prestartFlag = true
 		if errBuild := buildNodeNetworkSecret(
 			chainNode, chainConfig, &networkSecret,
 			networkSecretName); errBuild != nil {
