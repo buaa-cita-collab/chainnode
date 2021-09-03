@@ -183,6 +183,27 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 				},
 				Spec: corev1.PodSpec{
 					ShareProcessNamespace: pTrue,
+					InitContainers: []corev1.Container{
+						{
+							// TODO update to image in config
+							Image: "f4prime/pvinit:v0.0.2",
+							Name:  "pvinit",
+							Command: []string{
+								"python",
+								"pvinit.py",
+								"--chain",
+								chainName,
+								"--nodes",
+								nodeName,
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "datadir",
+									MountPath: "/data",
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							// TODO update to image in config
