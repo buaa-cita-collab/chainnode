@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	// "strconv"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func (r *ChainNodeReconciler) reconcileConfig(
@@ -85,6 +86,13 @@ func (r *ChainNodeReconciler) reconcileConfig(
 	}
 
 	if operation == buildNeeded {
+		if errSet := ctrl.SetControllerReference(
+			chainNode, &config, r.Scheme); errSet != nil {
+			logger.Error(errSet,
+				"set controller reference failed")
+			return nil
+		}
+
 		if errCreate := r.Create(ctx, &config); errCreate != nil {
 			logger.Error(errCreate, "Create network config failed")
 			return nil
