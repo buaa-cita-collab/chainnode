@@ -63,7 +63,7 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 			if errDelete := r.Delete(
 				ctx, &deployment,
 				client.PropagationPolicy(
-					metav1.DeletePropagationBackground,
+					metav1.DeletePropagationForeground,
 				),
 			); errDelete != nil {
 				logger.Error(errDelete,
