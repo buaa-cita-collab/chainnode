@@ -23,6 +23,11 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type NodeID struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+}
+
 // ChainConfigSpec defines the desired state of ChainConfig
 type ChainConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -61,7 +66,7 @@ type ChainConfigSpec struct {
 
 	// network-config.toml: peers
 	// Can be changed
-	Nodes []string `json:"nodes,omitempty"`
+	Nodes []NodeID `json:"nodes,omitempty"`
 
 	// Not allowed to change, any change will ignored
 	NetworkImage string `json:"network_image,omitempty"`
