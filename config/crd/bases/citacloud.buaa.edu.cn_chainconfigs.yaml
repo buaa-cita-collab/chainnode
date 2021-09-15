@@ -68,7 +68,15 @@ spec:
               nodes:
                 description: 'network-config.toml: peers Can be changed'
                 items:
-                  type: string
+                  properties:
+                    host:
+                      type: string
+                    port:
+                      type: string
+                  required:
+                  - host
+                  - port
+                  type: object
                 type: array
               prevhash:
                 description: 'genesis.toml: prevhash Not allowed to change, any change

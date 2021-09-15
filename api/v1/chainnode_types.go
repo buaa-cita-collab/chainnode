@@ -57,6 +57,9 @@ type ChainNodeSpec struct {
 	// Default to AutoUpdate
 	// Can be empty
 	UpdatePoilcy string `json:"update_policy,omitempty"`
+
+	SelfPort string `json:"self_port"`
+	SelfHost string `json:"self_host"`
 }
 
 // ChainNodeStatus defines the observed state of ChainNode
@@ -65,7 +68,7 @@ type ChainNodeStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Back up some fields to detect change
-	Nodes    []string `json:"nodes,omitempty"`
+	Nodes    []NodeID `json:"nodes,omitempty"`
 	LogLevel string   `json:"log_level,omitempty"`
 }
 

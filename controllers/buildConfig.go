@@ -3,6 +3,8 @@ package controllers
 import (
 	"context"
 	"errors"
+	"reflect"
+
 	citacloudv1 "github.com/buaa-cita/chainnode/api/v1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -10,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	// "strconv"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -38,7 +41,7 @@ func (r *ChainNodeReconciler) reconcileConfig(
 			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
 			if chainNode.Spec.UpdatePoilcy == "AutoUpdate" ||
 				len(chainNode.Status.Nodes) == 0 {
-				chainNode.Status.Nodes = make([]string, len(chainConfig.Spec.Nodes))
+				chainNode.Status.Nodes = make([]citacloudv1.NodeID, len(chainConfig.Spec.Nodes))
 				copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
 			}
 		} else {
@@ -60,10 +63,11 @@ func (r *ChainNodeReconciler) reconcileConfig(
 			operation = updateNeeded
 			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
 		}
+
 		if chainNode.Spec.UpdatePoilcy == AutoUpdate &&
-			!stringSliceEqual(chainNode.Status.Nodes, chainConfig.Spec.Nodes) {
+			reflect.DeepEqual(chainNode.Status.Nodes, chainConfig.Spec.Nodes) {
 			operation = updateNeeded
-			chainNode.Status.Nodes = make([]string, len(chainConfig.Spec.Nodes))
+			chainNode.Status.Nodes = make([]citacloudv1.NodeID, len(chainConfig.Spec.Nodes))
 			copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
 		} else if chainNode.Spec.NodeKey != config.Data[nodeKeyKey] {
 			operation = updateNeeded
@@ -276,28 +280,38 @@ validators = [{{range $_,$v := .Validators}}"{{$v}}", {{end}}]`
 	return templateBuilder(templateString, data)
 }
 
+type NetworkData struct {
+	SelfPort string
+	Nodes    []citacloudv1.NodeID
+}
+
 // generate network-config.toml
 func genNetworkConfig(
 	chainNode *citacloudv1.ChainNode,
 	chainConfig *citacloudv1.ChainConfig,
 ) (string, error) {
 	templateString := `enable_tls = true
-port = 40000
-{{ range $_, $node := .}}
+port = {{ .SelfPort }}
+{{ range $_, $node := .Nodes}}
 [[peers]]
-ip = "{{ $node }}"
-port = 40000
+ip = "{{ $node.Host }}"
+port = {{ $node.Port }}
 {{ end }}`
 
-	nodesIgnoreSelf := make([]string, 0, len(chainNode.Status.Nodes))
+	nodesIgnoreSelf := make([]citacloudv1.NodeID, 0, len(chainNode.Status.Nodes))
 	for _, node := range chainNode.Status.Nodes {
-		if node == chainNode.ObjectMeta.Name { // is current node
+		if node.Host == chainNode.Spec.SelfHost &&
+			node.Port == chainNode.Spec.SelfPort { // is current node
 			continue
 		}
 		nodesIgnoreSelf = append(nodesIgnoreSelf, node)
 	}
 
-	return templateBuilder(templateString, nodesIgnoreSelf)
+	return templateBuilder(templateString,
+		NetworkData{
+			SelfPort: chainNode.Spec.SelfPort,
+			Nodes:    nodesIgnoreSelf,
+		})
 }
 
 // consensus-log4rs.yaml
