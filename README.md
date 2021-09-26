@@ -16,7 +16,7 @@ Use kubebuilder scaffolding to write operator for the secondary development of k
 ### Installation Environment
 Need an overseas agent, or set up GO China agent
 ```
-# 启用 Go Modules 功能
+# Enable Go Modules function
 $ go env -w GO111MODULE=on
 $ go env -w  GOPROXY=https://goproxy.cn,direct
 $ go env | grep GOPROXY
@@ -25,8 +25,7 @@ GOPROXY="https://goproxy.cn"
 After the environment is configured, you can install it
 ```
 $ make install
-```
-```
+
 /root/chainnode/bin/controller-gen "crd:trivialVersions=true,preserveUnknownFields=false" rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 /root/chainnode/bin/kustomize build config/crd | kubectl apply -f -
 customresourcedefinition.apiextensions.k8s.io/chainconfigs.citacloud.buaa.edu.cn configured
