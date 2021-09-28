@@ -75,22 +75,31 @@ func (r *ChainNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// fetch chainConfig
-	var configName string
+	var configName, configNamespace string
 	if chainNode.Spec.ConfigName == "" {
-		// not configName not setted
+		// configName not set
 		configName = "chainconfig-sample"
 	} else {
 		configName = chainNode.Spec.ConfigName
 	}
 
+	if chainNode.Spec.ConfigNamespace == "" {
+		// configNamespace not set
+		configNamespace = "default"
+	} else {
+		configNamespace = chainNode.Spec.ConfigNamespace
+	}
+
 	configKey := types.NamespacedName{
-		Namespace: req.NamespacedName.Namespace,
-		Name:      configName}
+		Namespace: configNamespace,
+		Name:      configName,
+	}
 	var chainConfig citacloudv1.ChainConfig
 	if err := r.Get(ctx, configKey, &chainConfig); err != nil {
 		if apierror.IsNotFound(err) {
 			//dont show too much info if it is a not found error
-			logger.Info("can not find chainconfig " + configName)
+			logger.Info("can not find chainconfig " + configName +
+				" in namespace " + configNamespace)
 		} else {
 			logger.Error(err, "get chainconfig failed")
 		}
@@ -154,10 +163,12 @@ func (r *ChainNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				}
 				chainConfig := obj.(*citacloudv1.ChainConfig)
 				chainName := chainConfig.ObjectMeta.Name
+				chainNamespace := chainConfig.ObjectMeta.Namespace
 				for _, node := range nodeList.Items {
 
 					// Only append nodes belong to this chain
-					if chainName != node.Spec.ConfigName {
+					if chainNamespace != node.Spec.ConfigNamespace ||
+						chainName != node.Spec.ConfigName {
 						continue
 					}
 

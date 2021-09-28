@@ -31,7 +31,7 @@ func (r *ChainNodeReconciler) reconcileNodeDeployment(
 	operation := nothingNeeded
 	var deployment appv1.Deployment
 	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: "default",
+		Namespace: chainNode.ObjectMeta.Namespace,
 		Name:      deploymentName,
 	}, &deployment); err != nil {
 		// can not find deployment
@@ -161,7 +161,7 @@ func buildNodeDeployment(chainNode *citacloudv1.ChainNode,
 	deployment := appv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,
-			Namespace: "default",
+			Namespace: chainNode.ObjectMeta.Namespace,
 			Labels: map[string]string{
 				"node_name":  nodeName,
 				"chain_name": chainName,
@@ -538,7 +538,7 @@ func (r *ChainNodeReconciler) reconcileNodeKmsSecret(
 	var kmsSecret corev1.Secret
 	operation := nothingNeeded
 	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: "default",
+		Namespace: chainNode.ObjectMeta.Namespace,
 		Name:      kmsSecretName,
 	}, &kmsSecret); err != nil {
 		// can not find Secret
@@ -610,7 +610,7 @@ func buildNodeKmsSecret(
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kmsSecretName,
-			Namespace: "default",
+			Namespace: chainNode.ObjectMeta.Namespace,
 		},
 		Type: "Opaque",
 		Data: map[string][]byte{
@@ -637,7 +637,7 @@ func (r *ChainNodeReconciler) reconcileNodeNetworkSecret(
 	operation := nothingNeeded
 
 	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: "default",
+		Namespace: chainNode.ObjectMeta.Namespace,
 		Name:      networkSecretName,
 	}, &networkSecret); err != nil {
 		// can not find Secret
@@ -708,7 +708,7 @@ func buildNodeNetworkSecret(
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      networkSecretName,
-			Namespace: "default",
+			Namespace: chainNode.ObjectMeta.Namespace,
 			// Labels: map[string]string{
 			// 	"node_id": nodeID,
 			// },

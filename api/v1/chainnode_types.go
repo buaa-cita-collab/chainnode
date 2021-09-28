@@ -29,9 +29,13 @@ type ChainNodeSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	// Better to use string instead of int
 
+	// Namespace of the ChainConfig used
+	// Do not change this field
+	ConfigNamespace string `json:"config_namespace,omitempty"`
+
 	// Name of the ChainConfig used
-	// Not allowed to change, any change will ignored
-	ConfigName string `json:"configname,omitempty"`
+	// Do not change this field
+	ConfigName string `json:"config_name,omitempty"`
 
 	// Can be changed
 	// Can be empty

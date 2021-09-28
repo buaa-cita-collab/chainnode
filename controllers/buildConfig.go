@@ -32,7 +32,7 @@ func (r *ChainNodeReconciler) reconcileConfig(
 
 	// checking config to make sure operation needed
 	if err := r.Get(ctx, types.NamespacedName{
-		Namespace: "default",
+		Namespace: chainNode.ObjectMeta.Namespace,
 		Name:      configName,
 	}, &config); err != nil {
 		// can not find configmap
@@ -60,18 +60,22 @@ func (r *ChainNodeReconciler) reconcileConfig(
 		// If the change is related to backup, do not write
 		// in "else if", else please write in else if
 		if chainNode.Spec.LogLevel != chainNode.Status.LogLevel {
+			// logger.Info("log level changed")
 			operation = updateNeeded
 			chainNode.Status.LogLevel = chainNode.Spec.LogLevel
 		}
 
 		if chainNode.Spec.UpdatePoilcy == AutoUpdate &&
-			reflect.DeepEqual(chainNode.Status.Nodes, chainConfig.Spec.Nodes) {
+			!reflect.DeepEqual(chainNode.Status.Nodes, chainConfig.Spec.Nodes) {
 			operation = updateNeeded
 			chainNode.Status.Nodes = make([]citacloudv1.NodeID, len(chainConfig.Spec.Nodes))
 			copy(chainNode.Status.Nodes, chainConfig.Spec.Nodes)
+			// logger.Info("nodes changed","status",chainNode.Status.Nodes,"spec",chainConfig.Spec.Nodes)
 		} else if chainNode.Spec.NodeKey != config.Data[nodeKeyKey] {
+			// logger.Info("nodeKey changed")
 			operation = updateNeeded
 		} else if chainNode.Spec.NodeAddress != config.Data[nodeAddressKey] {
+			// logger.Info("node address changed")
 			operation = updateNeeded
 		}
 	}
@@ -212,7 +216,7 @@ block_delay_number = 0`
 	config := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configName,
-			Namespace: "default",
+			Namespace: chainNode.ObjectMeta.Namespace,
 		},
 		Data: map[string]string{
 			"consensus-config":  consensusConfig,

@@ -36,9 +36,12 @@ spec:
           spec:
             description: ChainNodeSpec defines the desired state of ChainNode
             properties:
-              configname:
-                description: Name of the ChainConfig used Not allowed to change, any
-                  change will ignored
+              config_name:
+                description: Name of the ChainConfig used Do not change this field
+                type: string
+              config_namespace:
+                description: Namespace of the ChainConfig used Do not change this
+                  field
                 type: string
               kms_pwd:
                 description: Kms password, change policy not set yet

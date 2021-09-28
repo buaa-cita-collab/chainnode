@@ -116,6 +116,8 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			logger.Error(err, "update chain config failed")
 			return ctrl.Result{}, nil
 		}
+	} else {
+		logger.Info("update chain config succeed")
 	}
 
 	// verify
@@ -130,9 +132,11 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// And write status back
 	if statusChanged {
 		if err := r.Status().Update(ctx, &chainConfig); err != nil {
-			logger.Error(err, "update chain config failed")
+			logger.Error(err, "update chain config status failed")
 			return ctrl.Result{}, nil
 		}
+	} else {
+		logger.Info("update chain config status succeed")
 	}
 
 	// verify
