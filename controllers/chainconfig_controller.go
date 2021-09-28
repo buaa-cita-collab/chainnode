@@ -110,6 +110,8 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		chainConfig.Status.Ready = true
 		statusChanged = true
 	}
+
+	updateBefore := false
 	// And write back
 	if changed {
 		if err := r.Update(ctx, &chainConfig); err != nil {
@@ -117,6 +119,7 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			return ctrl.Result{}, nil
 		}
 	} else {
+		updateBefore = true
 		logger.Info("update chain config succeed")
 	}
 
@@ -131,6 +134,17 @@ func (r *ChainConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	// And write status back
 	if statusChanged {
+		if updateBefore {
+			newChainConfig := citacloudv1.ChainConfig{}
+			if err := r.Get(ctx, req.NamespacedName, &newChainConfig); err != nil {
+				logger.Info("renew chainConfig failed")
+				return ctrl.Result{}, nil
+			} else {
+				chainConfig.Status.DeepCopyInto(&newChainConfig.Status)
+				newChainConfig.DeepCopyInto(&chainConfig)
+			}
+		}
+
 		if err := r.Status().Update(ctx, &chainConfig); err != nil {
 			logger.Error(err, "update chain config status failed")
 			return ctrl.Result{}, nil
