@@ -24,8 +24,10 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 type NodeID struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
+	Cluster string `json:"cluster"`
+	Name    string `json:"name"`
+	Host    string `json:"host"`
+	Port    string `json:"port"`
 }
 
 // ChainConfigSpec defines the desired state of ChainConfig

@@ -62,8 +62,11 @@ type ChainNodeSpec struct {
 	// Can be empty
 	UpdatePoilcy string `json:"update_policy,omitempty"`
 
-	SelfPort string `json:"self_port"`
-	SelfHost string `json:"self_host"`
+	// The cluster this chainnode belongs to
+	Cluster string `json:"cluster,omitempty"`
+
+	// SelfPort string `json:"self_port"`
+	// SelfHost string `json:"self_host"`
 }
 
 // ChainNodeStatus defines the observed state of ChainNode

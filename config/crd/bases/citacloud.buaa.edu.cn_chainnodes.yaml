@@ -36,6 +36,9 @@ spec:
           spec:
             description: ChainNodeSpec defines the desired state of ChainNode
             properties:
+              cluster:
+                description: The cluster this chainnode belongs to
+                type: string
               config_name:
                 description: Name of the ChainConfig used Do not change this field
                 type: string
@@ -58,18 +61,11 @@ spec:
               node_key:
                 description: Node Key Not allowed to change, any change will ignored
                 type: string
-              self_host:
-                type: string
-              self_port:
-                type: string
               update_policy:
                 description: Weither or not follow when chainConfig has updated Can
                   be updated Choose from AutoUpdate, NoUpdate Default to AutoUpdate
                   Can be empty
                 type: string
-            required:
-            - self_host
-            - self_port
             type: object
           status:
             description: ChainNodeStatus defines the observed state of ChainNode
@@ -80,12 +76,18 @@ spec:
                 description: Back up some fields to detect change
                 items:
                   properties:
+                    cluster:
+                      type: string
                     host:
+                      type: string
+                    name:
                       type: string
                     port:
                       type: string
                   required:
+                  - cluster
                   - host
+                  - name
                   - port
                   type: object
                 type: array

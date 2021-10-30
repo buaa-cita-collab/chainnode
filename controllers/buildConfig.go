@@ -285,8 +285,8 @@ validators = [{{range $_,$v := .Validators}}"{{$v}}", {{end}}]`
 }
 
 type NetworkData struct {
-	SelfPort string
-	Nodes    []citacloudv1.NodeID
+	Host string
+	Port string
 }
 
 // generate network-config.toml
@@ -295,27 +295,33 @@ func genNetworkConfig(
 	chainConfig *citacloudv1.ChainConfig,
 ) (string, error) {
 	templateString := `enable_tls = true
-port = {{ .SelfPort }}
-{{ range $_, $node := .Nodes}}
+port = 40000
+{{ range $_, $node := .}}
 [[peers]]
 ip = "{{ $node.Host }}"
 port = {{ $node.Port }}
 {{ end }}`
 
-	nodesIgnoreSelf := make([]citacloudv1.NodeID, 0, len(chainNode.Status.Nodes))
+	nodesIgnoreSelf := make([]NetworkData, 0, len(chainNode.Status.Nodes))
 	for _, node := range chainNode.Status.Nodes {
-		if node.Host == chainNode.Spec.SelfHost &&
-			node.Port == chainNode.Spec.SelfPort { // is current node
-			continue
+		if node.Cluster == chainNode.Spec.Cluster {
+			if node.Name != chainNode.ObjectMeta.Name {
+				nodesIgnoreSelf = append(nodesIgnoreSelf, NetworkData{
+					Host: node.Name,
+					Port: "40000",
+				})
+			}
+			// else it is this node, and should not be added in
+			// network config.toml
+		} else {
+			nodesIgnoreSelf = append(nodesIgnoreSelf, NetworkData{
+				Host: node.Host,
+				Port: node.Port,
+			})
 		}
-		nodesIgnoreSelf = append(nodesIgnoreSelf, node)
 	}
 
-	return templateBuilder(templateString,
-		NetworkData{
-			SelfPort: chainNode.Spec.SelfPort,
-			Nodes:    nodesIgnoreSelf,
-		})
+	return templateBuilder(templateString, nodesIgnoreSelf)
 }
 
 // consensus-log4rs.yaml
